@@ -40,7 +40,7 @@ fn divide_scal(v1: &Vec<f32>, scalar: &f32) -> Vec<f32> {
 }
 
 fn magnitude(v1: &Vec<f32>) -> f32 {
-    v1.into_iter().map(|x| x.powi(2)).fold(0., |sum, x| sum + x)
+    v1.into_iter().map(|x| x.powi(2)).fold(0., |sum, x| sum + x).sqrt()
 }
 
 fn distance(v1: &Vec<f32>, v2: &Vec<f32>) -> f32 {
