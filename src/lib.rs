@@ -1,141 +1,140 @@
 use std::cmp;
-use std::rc::Rc;
-use std::cell::RefCell;
 
-#[cfg(tests)]
-mod tests;
-
-// A hyperdimensional ball that may have other balls as children.
-// should be created with the Ball::new()
-#[derive(Clone)]
-pub struct Ball {
+// A hyperdimensional ball that may have other balls as children
+#[derive(Debug)]
+pub struct Ball<'a> {
     pub center: Vec<f32>,
     pub radius: f32,
-    pub parent: Option<Rc<RefCell<Ball>>>,
-    pub left_child: Option<Rc<RefCell<Ball>>>,
-    pub right_child: Option<Rc<RefCell<Ball>>>
+    pub parent: Option<&'a mut Ball<'a>>,
+    pub left_child: Option<&'a mut Ball<'a>>,
+    pub right_child: Option<&'a mut Ball<'a>>
 }
 
-pub struct BallTree {
-    first_ball: Option<Rc<RefCell<Ball>>>,
-    size: usize
+fn main() {
+    let b1 = Ball::new(vec![1., 3., 6., 3.]);
+    println!("{:?}", b1);
+    
+    let b2 = Ball::new(vec![3., 5., 8., 5.]);
+    println!("{:?}", b2);
+    
+    let pb = b1.bounding_ball(&b2);
+    println!("{:?}", pb);
 }
 
-impl BallTree {
-    fn new() -> BallTree {
-        BallTree {
-            first_ball: None,
-            size: 0
+impl <'a> Clone for Ball<'a> {
+    fn clone(&self) -> Ball<'a>{
+        Ball {
+            center: self.center.clone(),
+            radius: self.radius.clone(),
+            parent: self.parent,
+            left_child: self.left_child,
+            right_child: self.right_child
         }
     }
-
-    fn insert(&mut self, features: &Vec<f32>) {
-        match self.first_ball {
-            Some(ref ball) => {
-                let mut ball = ball.borrow_mut();
-                ball.insert(&Ball::new(features), false);
-            },
-            None => self.first_ball = Some(Ball::new(features))
-        }
-        self.size += 1;
-    }
-
-    // fn search_for_similar(&self, features: &Vec<f32>, limit: usize) -> Vec<Ball> {
-    //     match self.first_ball {
-    //         Some(first_ball) => {
-    //             first_ball.borrow()
-    //             .search(&features, limit)
-    //             .into_iter(|ball: Rc<RefCell<Ball>>| ball.clone().borrow_ref())
-    //         },
-    //         None => 
-    //     },
-    //     self.first_ball.search(&features, limit)
-    // }
 }
 
-impl Ball {
-    fn new(features: &Vec<f32>) -> Rc<RefCell<Ball>> {
-        Rc::new(RefCell::new(Ball {
-            center: features.clone(), radius: 0.,
+impl <'a> Ball <'a> {
+    fn new(features: Vec<f32>) -> Ball<'a> {
+        Ball {
+            center: features, radius: 0.,
             parent: None, left_child: None, right_child: None
-        }))
+        }
     }
 
-    fn bounding_ball(&self, other: &Ball) -> Rc<RefCell<Ball>> {
+    fn bounding_ball(&self, other: &Ball) -> Ball<'a> {
         let span = subtract_vec(&self.center, &other.center);
         let mag = magnitude(&span);
         let unit_vec = divide_scal(&span, &mag);
         let p1 = add_vec(&self.center, &multiply_scal(&unit_vec, &self.radius));
         let p2 = subtract_vec(&other.center, &multiply_scal(&unit_vec, &other.radius));
 
-        Rc::new(RefCell::new(Ball {
+        Ball {
             center: midpoint(&p1, &p2),
             radius: distance(&p1, &p2) / 2.,
             parent: None, left_child: None, right_child: None
-        }))
-    }
-
-    fn insert(&mut self, new_ball: &Rc<RefCell<Ball>>, left: bool) {
-        let new_ball = new_ball.borrow_mut();
-        let dist = distance(&self.center, &new_ball.center);
-        // if outside of the ball, make a new parent ball and put both inside
-        if dist > self.radius {
-            let mut new_parent = self.bounding_ball(&new_ball).borrow_mut();
-            new_parent.parent = self.parent;
-            new_parent.left_child = Some(Rc::new(RefCell::new(self.clone())));
-            new_parent.right_child = Some(Rc::new(RefCell::new(new_ball.clone())));
-            
-            let new_parent = Rc::new(RefCell::new(new_parent.clone()));
-            match self.parent {
-                Some(ref old_parent) => {
-                    let old_parent = old_parent.borrow_mut();
-                    if left {
-                        old_parent.left_child = Some(new_parent);
-                    } else {
-                        old_parent.right_child = Some(new_parent);
-                    }
-                },
-                None => ()
-            }
-            self.parent = Some(new_parent);
-            new_ball.parent = Some(new_parent);
         }
     }
 
-    fn search_similar(&self, features: &Vec<f32>, limit: usize) {
-
+    fn insert(&'a mut self, new_ball: &'a mut Ball<'a>, is_left: bool) {
+        let dist = distance(&self.center, &new_ball.center);
+        // if outside of the ball, make a new parent ball and put both inside
+        if dist > self.radius {
+            match self.parent {
+                Some(old_parent) => {
+                    let mut new_parent;
+                    if is_left {
+                        old_parent.left_child =
+                            Some(&mut self.bounding_ball(&new_ball));
+                        new_parent = old_parent.left_child.unwrap();
+                    } else {
+                        old_parent.right_child =
+                            Some(&mut self.bounding_ball(&new_ball));
+                        new_parent = old_parent.right_child.unwrap();
+                    }
+                    new_parent.parent = Some(self.parent.unwrap());
+                    new_parent.right_child = Some(self);
+                    new_parent.left_child = Some(new_ball);
+                    self.parent = Some(new_parent);
+                    new_ball.parent = Some(new_parent);
+                },
+                
+                None => {
+                    // Must be the first ball in the tree.
+                    // this reference needs to stay the same for the tree to function, so instead we
+                    // inject a copy, and grow this ball to be the new parent.
+                    let new_self_blueprint = self.bounding_ball(new_ball);
+                    self.left_child = Some(&mut self.clone());
+                    self.right_child = Some(new_ball);
+                    self.center = new_self_blueprint.center;
+                    self.radius = new_self_blueprint.radius;
+                }
+            };
+        }
     }
 
-    // fn insert(&self, new_ball: Rc<RefCell<Ball>>) {
-    //     let dist = distance(&self.center, &new_ball.center);
-    //     // if outside of the ball, make a new parent ball and put both inside
-    //     if dist > self.radius {
-    //         let new_parent = self.bounding_ball(&new_ball);
-    //         new_parent.parent = self.parent;
-    //         new_parent.left_child = Some(&mut Box::new(*self));
-    //         new_parent.right_child = Some(new_ball);
-    //         self.parent = Some(&mut new_parent);
-    //     }
+    // fn search_similar(&self, features: &Vec<f32>, limit: usize) {
 
-    //     // if the ball contains other balls
-    //     // if self.radius > 0. {
-
-    //     //     let left_child = self.left_child.unwrap();
-    //     //     let right_child = self.right_child.unwrap();
-
-    //     //     // calculate the closest ball to insert the new ball into
-    //     //     let left_dist = new_ball.distance(&left_child);
-    //     //     let right_dist = new_ball.distance(&right_child);
-    //     //     if left_dist < right_dist {
-    //     //         left_child.insert(&new_ball);
-    //     //     } else {
-    //     //         right_child.insert(&new_ball);
-    //     //     }
-    //     // } else {
-            
-    //     // }
     // }
 }
+
+
+// pub struct BallTree {
+//     first_ball: Option<&'a mut Ball<'a>>,
+//     size: usize
+// }
+
+// impl BallTree {
+//     fn new() -> BallTree {
+//         BallTree {
+//             first_ball: None,
+//             size: 0
+//         }
+//     }
+
+//     fn insert(&mut self, features: &Vec<f32>) {
+//         match self.first_ball {
+//             Some(ref ball) => {
+//                 let mut ball = ball.borrow_mut();
+//                 ball.insert(&Ball::new(features), false);
+//             },
+//             None => self.first_ball = Some(Ball::new(features))
+//         }
+//         self.size += 1;
+//     }
+
+//     // fn search_for_similar(&self, features: &Vec<f32>, limit: usize) -> Vec<Ball> {
+//     //     match self.first_ball {
+//     //         Some(first_ball) => {
+//     //             first_ball.borrow()
+//     //             .search(&features, limit)
+//     //             .into_iter(|ball: Rc<RefCell<Ball>>| ball.clone().borrow_ref())
+//     //         },
+//     //         None => 
+//     //     },
+//     //     self.first_ball.search(&features, limit)
+//     // }
+// }
+
 
 
 // useful vector functions
