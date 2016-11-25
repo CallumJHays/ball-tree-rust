@@ -1,0 +1,6 @@
+[package]
+name = "ball-tree"
+version = "0.1.0"
+authors = ["callumjhays <callumjhays@gmail.com>"]
+
+[dependencies]
