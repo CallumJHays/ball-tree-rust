@@ -1,16 +1,18 @@
 use std::cmp;
+use std::rc::Rc;
+use std::cell::RefCell;
 
 #[cfg(tests)]
 mod tests;
 
 // A hyperdimensional ball that may have other balls as children.
 // should be created with the Ball::new()
-pub struct Ball<'a> {
+pub struct Ball {
     pub center: Vec<f32>,
     pub radius: f32,
-    pub parent: Option<&'a mut Box<Ball<'a>>>,
-    pub left_child: Option<&'a mut Box<Ball<'a>>>,
-    pub right_child: Option<&'a mut Box<Ball<'a>>>
+    pub parent: Option<Rc<RefCell<Ball>>>,
+    pub left_child: Option<Rc<RefCell<Ball>>>,
+    pub right_child: Option<Rc<RefCell<Ball>>>
 }
 
 // useful vector functions
@@ -54,7 +56,7 @@ fn midpoint(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
     .collect()
 }
 
-impl <'a> Ball <'a> {
+impl Ball {
     fn new(features: &Vec<f32>) -> Ball {
         Ball {
             center: features.clone(), radius: 0.,
@@ -62,7 +64,7 @@ impl <'a> Ball <'a> {
         }
     }
 
-    fn bounding_ball(&self, other: &Ball) -> Box<Ball> {
+    fn bounding_ball(&self, other: &Ball) -> Rc<RefCell<Ball>> {
         let span = subtract_vec(&self.center, &other.center);
         let magnitude = magnitude(&span);
         let unit_vec = divide_scal(&span, &magnitude);
@@ -73,10 +75,10 @@ impl <'a> Ball <'a> {
             radius: distance(&p1, &p2) / 2.,
             parent: None, left_child: None, right_child: None
         };
-        Box::new(new_ball)
+        Rc::new(RefCell::new(new_ball))
     }
 
-    fn insert(&'a mut self, new_ball: &'a mut Box<Ball<'a>>) {
+    fn insert(&self, new_ball: Rc<RefCell<Ball>>) {
         let dist = distance(&self.center, &new_ball.center);
         // if outside of the ball, make a new parent ball and put both inside
         if dist > self.radius {
