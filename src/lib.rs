@@ -1,24 +1,12 @@
 use std::cmp;
 
 // A hyperdimensional ball that may have other balls as children
-#[derive(Debug)]
 pub struct Ball<'a> {
     pub center: Vec<f32>,
     pub radius: f32,
     pub parent: Option<&'a mut Ball<'a>>,
     pub left_child: Option<&'a mut Ball<'a>>,
     pub right_child: Option<&'a mut Ball<'a>>
-}
-
-fn main() {
-    let b1 = Ball::new(vec![1., 3., 6., 3.]);
-    println!("{:?}", b1);
-    
-    let b2 = Ball::new(vec![3., 5., 8., 5.]);
-    println!("{:?}", b2);
-    
-    let pb = b1.bounding_ball(&b2);
-    println!("{:?}", pb);
 }
 
 impl <'a> Clone for Ball<'a> {
