@@ -1,35 +1,35 @@
 use std::cmp;
 
 // A hyperdimensional ball that may have other balls as children
-pub struct Ball<'a> {
+#[derive(Debug, Clone)]
+pub struct Ball {
     pub center: Vec<f32>,
     pub radius: f32,
-    pub parent: Option<&'a mut Ball<'a>>,
-    pub left_child: Option<&'a mut Ball<'a>>,
-    pub right_child: Option<&'a mut Ball<'a>>
+    pub parent: Option<Box<Ball>>,
+    pub left_child: Option<Box<Ball>>,
+    pub right_child: Option<Box<Ball>>
 }
 
-impl <'a> Clone for Ball<'a> {
-    fn clone(&self) -> Ball<'a>{
-        Ball {
-            center: self.center.clone(),
-            radius: self.radius.clone(),
-            parent: self.parent,
-            left_child: self.left_child,
-            right_child: self.right_child
-        }
-    }
+fn main() {
+    let b1 = Ball::new(vec![1., 3., 6., 3.]);
+    println!("{:?}", b1);
+    
+    let b2 = Ball::new(vec![3., 5., 8., 5.]);
+    println!("{:?}", b2);
+    
+    let pb = b1.bounding_ball(&b2);
+    println!("{:?}", pb);
 }
 
-impl <'a> Ball <'a> {
-    fn new(features: Vec<f32>) -> Ball<'a> {
+impl Ball {
+    fn new(features: Vec<f32>) -> Ball {
         Ball {
             center: features, radius: 0.,
             parent: None, left_child: None, right_child: None
         }
     }
 
-    fn bounding_ball(&self, other: &Ball) -> Ball<'a> {
+    fn bounding_ball(&self, other: &Ball) -> Ball {
         let span = subtract_vec(&self.center, &other.center);
         let mag = magnitude(&span);
         let unit_vec = divide_scal(&span, &mag);
@@ -43,40 +43,36 @@ impl <'a> Ball <'a> {
         }
     }
 
-    fn insert(&'a mut self, new_ball: &'a mut Ball<'a>, is_left: bool) {
+    fn insert(&mut self, new_ball: Ball, is_left: bool) {
         let dist = distance(&self.center, &new_ball.center);
         // if outside of the ball, make a new parent ball and put both inside
         if dist > self.radius {
             match self.parent {
-                Some(old_parent) => {
-                    let mut new_parent;
+                Some(ref mut old_parent) => {
+                    let mut new_parent = self.bounding_ball(&new_ball);
                     if is_left {
-                        old_parent.left_child =
-                            Some(&mut self.bounding_ball(&new_ball));
-                        new_parent = old_parent.left_child.unwrap();
+                        old_parent.left_child = Some(Box::new(new_parent));
                     } else {
-                        old_parent.right_child =
-                            Some(&mut self.bounding_ball(&new_ball));
-                        new_parent = old_parent.right_child.unwrap();
-                    }
-                    new_parent.parent = Some(self.parent.unwrap());
-                    new_parent.right_child = Some(self);
-                    new_parent.left_child = Some(new_ball);
-                    self.parent = Some(new_parent);
-                    new_ball.parent = Some(new_parent);
+                        old_parent.right_child = Some(Box::new(new_parent));
+                    };
+                    new_parent.parent = Some(*old_parent);
+                    new_parent.right_child = Some(Box::new(*self));
+                    new_parent.left_child = Some(Box::new(new_ball));
+                    self.parent = Some(Box::new(new_parent));
+                    new_ball.parent = Some(Box::new(new_parent));
                 },
                 
                 None => {
                     // Must be the first ball in the tree.
                     // this reference needs to stay the same for the tree to function, so instead we
                     // inject a copy, and grow this ball to be the new parent.
-                    let new_self_blueprint = self.bounding_ball(new_ball);
-                    self.left_child = Some(&mut self.clone());
-                    self.right_child = Some(new_ball);
+                    let new_self_blueprint = self.bounding_ball(&new_ball);
+                    self.left_child = Some(Box::new(*self));
+                    self.right_child = Some(Box::new(new_ball));
                     self.center = new_self_blueprint.center;
                     self.radius = new_self_blueprint.radius;
                 }
-            };
+            }
         }
     }
 
@@ -165,3 +161,4 @@ fn midpoint(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
     .map(|i| (v1[i] + v2[i]) / 2.)
     .collect()
 }
+// yermyuurstd@om3-27@
