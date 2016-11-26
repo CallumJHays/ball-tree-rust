@@ -1,4 +1,4 @@
-# `ball-tree`
+# Rust Ball-Tree implementation
 
 ***WARNING: Incomplete. Please do not use yet.***
 
