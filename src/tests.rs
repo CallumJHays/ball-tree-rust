@@ -1,4 +1,5 @@
 use super::*;
+use BallTree::*;
 
 fn test_vec() -> Vec<f32> {
     vec![1., 2., 3., 4.]
@@ -12,51 +13,112 @@ fn add_vec_test() {
 
 #[test]
 fn add_scal_test() {
-    let test = add_scal(&test_vec(), 42);
+    let test = add_scal(&test_vec(), &42.);
     assert_eq!(test, vec![43., 44., 45., 46.]);
 }
 
 #[test]
 fn subtract_vec_test() {
-    unimplemented!();
+    
 }
 
 #[test]
 fn subtract_scal_test() {
-    unimplemented!();
+    
 }
 
 #[test]
 fn multiply_scal_test() {
-    unimplemented!();
+    
 }
 
 #[test]
 fn divide_scal_test() {
-    unimplemented!();
+    
 }
 
 #[test]
 fn magnitude_test() {
-    unimplemented!();
+    
 }
 
 #[test]
 fn distance_test() {
-    unimplemented!();
+    
 }
 
 #[test]
 fn midpoint_test() {
-    unimplemented!();
+    
 }
 
 #[test]
 fn new_ball_tree_test() {
-
+    let nil_tree = BallTree::new();
+    assert_eq!(nil_tree, Nil);
 }
 
 #[test]
-fn push_ball_tree_test() {
-    
+fn ball_tree_push_test() {
+    let nil_tree = BallTree::new();
+
+    // pushing to an empty tree will yield the point
+    let vec1 = || vec![1., 2., 3., 4.]; // use vector factory for brevity
+    let tree1 = nil_tree.push(&vec1());
+    assert_eq!(tree1, Point(vec1()));
+
+    // pushing to a tree with a point at root will yield a ball with two points
+    let vec2 = || vec![3., 4., 5., 6.];
+    let ball2 = || Point(vec2()).bounding_ball(Point(vec1()));
+    let center2 = || {
+        match ball2() {
+            Ball(center, _, _, _) => center,
+            _ => panic!("What the...")
+        }
+    };
+    let radius2 = || {
+        match ball2() {
+            Ball(_, radius, _, _) => radius,
+            _ => panic!("What the...")
+        }
+    };
+    let tree2 = tree1.push(&vec2());
+    assert_eq!(tree2,
+        Ball(
+            center2(),
+            radius2(),
+            Box::new(Point(vec1())),
+            Box::new(Point(vec2()))
+        )
+    );
+
+    // pushing to a tree with a ball at root will yield a nested ball tree structure
+    let vec3 = || vec![0., 0., 0., 0.];
+    let ball3 = || Point(vec3()).bounding_ball(ball2());
+    let center3 = || {
+        match ball3() {
+            Ball(center, _, _, _) => center,
+            _ => panic!("What the...")
+        }
+    };
+    let radius3 = || {
+        match ball3() {
+            Ball(_, radius, _, _) => radius,
+            _ => panic!("What the...")
+        }
+    };
+    let tree3 = tree2.push(&vec3());
+    assert_eq!(tree3,
+        Ball(
+            center3(),
+            radius3(),
+            Box::new(Ball(
+                center2(),
+                radius2(),
+                Box::new(Point(vec1())),
+                Box::new(Point(vec3()))
+            )),
+            Box::new(Point(vec2()))
+        )
+    );
 }

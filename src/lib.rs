@@ -1,11 +1,11 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
-#[cfg(tests)]
+#[cfg(test)]
 mod tests;
 
 // An immutable hyperdimensional ball tree
-#[derive(Clone)]
+#[derive(Clone, Debug, PartialEq)]
 pub enum BallTree {
     Point(Vec<f32>),
     //     center,   rad, left,      right
@@ -20,8 +20,8 @@ impl BallTree {
         Nil
     }
 
-    pub fn push(self, features: Vec<f32>) -> BallTree {
-        self.push_node(&Point(features))
+    pub fn push(self, features: &Vec<f32>) -> BallTree {
+        self.push_node(&Point(features.clone()))
     }
 
     fn push_node(self, node: &BallTree) -> BallTree {
@@ -30,15 +30,15 @@ impl BallTree {
             Ball(self_center, self_rad, left, right) => match node {
                 &Nil => Nil,
                 &Point(ref node_center) => {
-                    let get_dist_rad = |tree| match tree {
-                        &Point(ref center) => (distance(&node_center, center), 0.),
-                        &Ball(ref center, ref rad, _, _) => (distance(&node_center, center), *rad),
-                        &Nil => panic!("This ball has a Nil left or right child!")
+                    let get_dist_rad = |tree: &BallTree| match *tree {
+                        Point(ref center) => (distance(&node_center, &center), 0.),
+                        Ball(ref center, rad, _, _) => (distance(&node_center, &center), rad),
+                        Nil => panic!("This ball has a Nil left or right child!")
                     };
 
                     let (left_dist, left_rad) = get_dist_rad(&left);
                     let (right_dist, right_rad) = get_dist_rad(&right);
-                    
+
                     // if inside both balls, choose ball to push to based on distance
                     if left_dist < left_rad && right_dist < right_rad {
                         if left_dist < right_dist {
@@ -61,21 +61,17 @@ impl BallTree {
                         }
                     }
                 },
-                &Ball(ref node_center, ref node_rad, _, _) => {
-                    Nil
-                }
+                &Ball(ref node_center, ref node_rad, _, _) => panic!("Adding entire balls to ball tree is illegal!")
             },
-            Point(self_center) => {
-                Nil
-            }
+            Point(self_center) => Point(self_center).bounding_ball(node.clone())
         }
     }
 
     fn bounding_ball(self, other: BallTree) -> BallTree {
-        let get_center_rad = |tree| match tree {
-            &Point(ref center) => (center, 0.),
-            &Ball(ref center, ref rad, _, _) => (center, *rad),
-            &Nil => panic!("Bounding ball called on a Nil balltree")
+        let get_center_rad = |tree: &BallTree| match *tree {
+            Point(ref center) => (center.clone(), 0.),
+            Ball(ref center, rad, _, _) => (center.clone(), rad),
+            Nil => panic!("Bounding ball called on a Nil balltree")
         };
 
         let (self_center, self_rad) = get_center_rad(&self);
@@ -92,40 +88,40 @@ impl BallTree {
 
 // useful vector functions
 // assume that vector to vector operations are performed with vectors of the same size
-fn add_vec(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
+pub fn add_vec(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
     (0..v1.len()).map(|i| v1[i] + v2[i]).collect()
 }
-fn add_scal(v1: &Vec<f32>, scalar: &f32) -> Vec<f32> {
+pub fn add_scal(v1: &Vec<f32>, scalar: &f32) -> Vec<f32> {
     (0..v1.len()).map(|i| v1[i] + scalar).collect()
 }
 
-fn subtract_vec(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
+pub fn subtract_vec(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
     (0..v1.len()).map(|i| v1[i] - v2[i]).collect()
 }
-fn subtract_scal(v1: &Vec<f32>, scalar: &f32) -> Vec<f32> {
+pub fn subtract_scal(v1: &Vec<f32>, scalar: &f32) -> Vec<f32> {
     (0..v1.len()).map(|i| v1[i] - scalar).collect()
 }
 
-fn multiply_scal(v1: &Vec<f32>, scalar: &f32) -> Vec<f32> {
+pub fn multiply_scal(v1: &Vec<f32>, scalar: &f32) -> Vec<f32> {
     v1.into_iter().map(|x| x * scalar).collect()
 }
 
-fn divide_scal(v1: &Vec<f32>, scalar: &f32) -> Vec<f32> {
+pub fn divide_scal(v1: &Vec<f32>, scalar: &f32) -> Vec<f32> {
     v1.into_iter().map(|x| x / scalar).collect()
 }
 
-fn magnitude(v1: &Vec<f32>) -> f32 {
+pub fn magnitude(v1: &Vec<f32>) -> f32 {
     v1.into_iter().map(|x| x.powi(2)).fold(0., |sum, x| sum + x).sqrt()
 }
 
-fn distance(v1: &Vec<f32>, v2: &Vec<f32>) -> f32 {
+pub fn distance(v1: &Vec<f32>, v2: &Vec<f32>) -> f32 {
     (0..v1.len())
         .map(|i| (v1[i] - v2[i]).powi(2))
         .fold(0., |sum, x| sum + x)
         .sqrt()
 }
 
-fn midpoint(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
+pub fn midpoint(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
     (0..v1.len())
         .map(|i| (v1[i] + v2[i]) / 2.)
         .collect()
