@@ -19,37 +19,47 @@ fn add_scal_test() {
 
 #[test]
 fn subtract_vec_test() {
-    
+    let test = subtract_vec(&test_vec(), &test_vec());
+    assert_eq!(test, vec![0.; 4]);
+
+    let test = subtract_vec(&test_vec(), &vec![11., 12., 13., 14.]);
+    assert_eq!(test, vec![-10.; 4]);
 }
 
 #[test]
 fn subtract_scal_test() {
-    
+    let test = subtract_scal(&test_vec(), &100.);
+    assert_eq!(test, vec![-99., -98., -97., -96.]);
 }
 
 #[test]
 fn multiply_scal_test() {
-    
+    let test = multiply_scal(&test_vec(), &20.);
+    assert_eq!(test, vec![20., 40., 60., 80.]);
 }
 
 #[test]
 fn divide_scal_test() {
-    
+    let test = divide_scal(&test_vec(), &10.);
+    assert_eq!(test, vec![0.1, 0.2, 0.3, 0.4]);
 }
 
 #[test]
 fn magnitude_test() {
-    
+    let test = magnitude(&vec![2., 2., 2., 2.]);
+    assert_eq!(test, 4.);
 }
 
 #[test]
 fn distance_test() {
-    
+    let test = distance(&vec![4., 3.], &vec![-4., -3.]);
+    assert_eq!(test, 10.);
 }
 
 #[test]
 fn midpoint_test() {
-    
+    let test = midpoint(&vec![50., 10., 10.], &vec![-50., 10., 10.]);
+    assert_eq!(test, vec![0., 10., 10.]);
 }
 
 #[test]
@@ -68,7 +78,7 @@ fn ball_tree_push_test() {
     assert_eq!(tree1, Point(vec1()));
 
     // pushing to a tree with a point at root will yield a ball with two points
-    let vec2 = || vec![3., 4., 5., 6.];
+    let vec2 = || vec![-5., 6., -7., 8.];
     let ball2 = || Point(vec2()).bounding_ball(Point(vec1()));
     let center2 = || {
         match ball2() {
@@ -93,7 +103,7 @@ fn ball_tree_push_test() {
     );
 
     // pushing to a tree with a ball at root will yield a nested ball tree structure
-    let vec3 = || vec![0., 0., 0., 0.];
+    let vec3 = || vec![9., -10., 11., -12.];
     let ball3 = || Point(vec3()).bounding_ball(ball2());
     let center3 = || {
         match ball3() {
@@ -116,9 +126,9 @@ fn ball_tree_push_test() {
                 center2(),
                 radius2(),
                 Box::new(Point(vec1())),
-                Box::new(Point(vec3()))
+                Box::new(Point(vec2()))
             )),
-            Box::new(Point(vec2()))
+            Box::new(Point(vec3()))
         )
     );
 }

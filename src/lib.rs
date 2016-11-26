@@ -40,25 +40,24 @@ impl BallTree {
                     let (right_dist, right_rad) = get_dist_rad(&right);
 
                     // if inside both balls, choose ball to push to based on distance
-                    if left_dist < left_rad && right_dist < right_rad {
-                        if left_dist < right_dist {
-                            Ball(self_center, self_rad, Box::new(left.push_node(node)), right)
+                    if left_dist <= left_rad || right_dist <= right_rad {
+
+                        let (left_box, right_box) = if left_dist > left_rad {
+                            (Box::new(left.push_node(node)), right)
+                        } else if right_dist > right_rad {
+                            (left, Box::new(right.push_node(node)))
                         } else {
-                            Ball(self_center, self_rad, left, Box::new(right.push_node(node)))
-                        }
-                    } else if left_dist < left_rad {
-                        Ball(self_center, self_rad, Box::new(left.push_node(node)), right)
-                    } else if right_dist < right_rad {
-                        Ball(self_center, self_rad, left, Box::new(right.push_node(node)))
+                            if left_dist < right_dist {
+                                (Box::new(left.push_node(node)), right)
+                            } else {
+                                (left, Box::new(right.push_node(node)))
+                            }
+                        };
+                        Ball(self_center, self_rad, left_box, right_box)
                     } else {
-                        // node is in neither left nor right, wrap closest child in a new ball
-                        if left_dist < right_dist {
-                            let ball_wrapper = (*left).bounding_ball(node.clone());
-                            Ball(self_center, self_rad, Box::new(ball_wrapper), right)
-                        } else {
-                            let ball_wrapper = (*right).bounding_ball(node.clone());
-                            Ball(self_center, self_rad, left, Box::new(ball_wrapper))
-                        }
+                        // node is in neither left nor right, wrap in a new ball
+                        let old_self = Ball(self_center, self_rad, left, right);
+                        old_self.bounding_ball(node.clone())
                     }
                 },
                 &Ball(ref node_center, ref node_rad, _, _) => panic!("Adding entire balls to ball tree is illegal!")
