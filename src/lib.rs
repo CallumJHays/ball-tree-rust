@@ -21,15 +21,15 @@ impl BallTree {
     }
 
     pub fn push(self, features: Vec<f32>) -> BallTree {
-        self.push_node(Point(features))
+        self.push_node(&Point(features))
     }
 
-    fn push_node(self, node: BallTree) -> BallTree {
+    fn push_node(self, node: &BallTree) -> BallTree {
         match self {
             Nil => node.clone(),
             Ball(self_center, self_rad, left, right) => match node {
-                Nil => Nil,
-                Point(ref node_center) => {
+                &Nil => Nil,
+                &Point(ref node_center) => {
                     let get_dist_rad = |tree| match tree {
                         &Point(ref center) => (distance(&node_center, center), 0.),
                         &Ball(ref center, ref rad, _, _) => (distance(&node_center, center), *rad),
@@ -47,21 +47,21 @@ impl BallTree {
                             Ball(self_center, self_rad, left, Box::new(right.push_node(node)))
                         }
                     } else if left_dist < left_rad {
-                            Ball(self_center, self_rad, Box::new(left.push_node(node)), right)
+                        Ball(self_center, self_rad, Box::new(left.push_node(node)), right)
                     } else if right_dist < right_rad {
-                            Ball(self_center, self_rad, left, Box::new(right.push_node(node)))
+                        Ball(self_center, self_rad, left, Box::new(right.push_node(node)))
                     } else {
                         // node is in neither left nor right, wrap closest child in a new ball
                         if left_dist < right_dist {
-                            let ball_wrapper = (*left).bounding_ball(node);
+                            let ball_wrapper = (*left).bounding_ball(node.clone());
                             Ball(self_center, self_rad, Box::new(ball_wrapper), right)
                         } else {
-                            let ball_wrapper = (*right).bounding_ball(node);
+                            let ball_wrapper = (*right).bounding_ball(node.clone());
                             Ball(self_center, self_rad, left, Box::new(ball_wrapper))
                         }
                     }
                 },
-                Ball(ref node_center, ref node_rad, _, _) => {
+                &Ball(ref node_center, ref node_rad, _, _) => {
                     Nil
                 }
             },
