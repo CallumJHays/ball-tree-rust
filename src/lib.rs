@@ -66,8 +66,8 @@ fn insert(this: &Rc<RefCell<Ball>>, new_ball: &Rc<RefCell<Ball>>, is_left: bool)
         println!("bounding {:?}", bounding);
         println!("State of this {:?}", this);
         
-        match this.borrow_mut().parent {
-            Some(ref mut old_parent) => {
+        match this.borrow().parent {
+            Some(ref old_parent) => {
                 println!("old_parent exists! wrapping with middle man.");
                 let mut bounding_mut = bounding.borrow_mut();
                 let mut old_parent_mut = old_parent.borrow_mut();
@@ -204,4 +204,3 @@ fn midpoint(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
         .map(|i| (v1[i] + v2[i]) / 2.)
         .collect()
 }
-// yermyuurstd@om3-27@
