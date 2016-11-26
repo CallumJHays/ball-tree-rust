@@ -8,25 +8,25 @@ Ball Trees are Binary-Tree-like data structures useful for storing and searching
 
 ## Usage
 Add crate to cargo.toml
-```
+```toml
 [dependencies]
 ball-tree = { git = "https://github.com/callumjhays/ball-tree-rust }
 ```
 
 Import crate for use:
-```
+```rust
 extern crate ball_tree;
 
 use ball_tree::BallTree;
 ```
 
 Create a new ball tree:
-```
+```rust
 let bt = BallTree::new()
 ```
 
 Insert Items into ball tree:
-```
+```rust
 let vector: Vec<f32> = vec![1., 2., 3...];
 let updated_tree = bt.push(&vector);
 ```
