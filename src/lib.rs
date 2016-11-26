@@ -1,4 +1,3 @@
-use std::cmp;
 use std::cell::RefCell;
 use std::rc::Rc;
 
@@ -13,13 +12,13 @@ pub struct Ball {
 }
 
 fn main() {
-    let mut b1 = Ball::new(vec![1., 3., 6., 3.]);
+    let b1 = Ball::new(vec![1., 3., 6., 3.]);
     println!("{:?}", b1);
 
     let b2 = Ball::new(vec![3., 5., 8., 5.]);
     println!("{:?}", b2);
 
-    insert(b1.clone(), b2, false);
+    insert(&b1, &b2, false);
     println!("{:?}", b1);
 }
 
@@ -56,14 +55,19 @@ impl Ball {
 }
 
 
-fn insert(this: Rc<RefCell<Ball>>, new_ball: Rc<RefCell<Ball>>, is_left: bool) {
+fn insert(this: &Rc<RefCell<Ball>>, new_ball: &Rc<RefCell<Ball>>, is_left: bool) {
+    println!("Inserting {:?} into {:?}", new_ball, this);
     let dist = distance(&this.borrow().center, &new_ball.borrow().center);
+    println!("Distance = {}", dist);
     // if outside of the ball, make a new parent ball and put both inside
     if dist > this.borrow().radius {
-        let mut bounding = Rc::new(RefCell::new(this.borrow().bounding_ball(&new_ball.borrow())));
+        println!("Distance > this.radius: {}. Wrapping in new ball..", this.borrow().radius);
+        let bounding = Rc::new(RefCell::new(this.borrow().bounding_ball(&new_ball.borrow())));
+        println!("bounding {:?}", bounding);
 
         match this.borrow().parent.clone() {
             Some(old_parent) => {
+                println!("old_parent exists! wrapping with middle man.");
                 let mut bounding_mut = bounding.borrow_mut();
                 let mut old_parent_mut = old_parent.borrow_mut();
                 bounding_mut.parent = Some(old_parent.clone());
@@ -79,12 +83,18 @@ fn insert(this: Rc<RefCell<Ball>>, new_ball: Rc<RefCell<Ball>>, is_left: bool) {
             }
 
             None => {
+                println!("No parent found. Must be root ball.");
                 // Must be the first ball in the tree.
                 let mut this_mut = this.borrow_mut();
+                println!("Borrowed this_mut");
                 this_mut.left_child = Some(this.clone());
+                println!("Set new left_child");
                 this_mut.right_child = Some(new_ball.clone());
+                println!("Set new right_child");
                 this_mut.center = bounding.borrow().center.clone();
+                println!("Set new center");
                 this_mut.radius = bounding.borrow().radius;
+                println!("Set new radius");
             }
         }
     } else { // inject it into the closest child
