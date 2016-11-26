@@ -64,9 +64,10 @@ fn insert(this: &Rc<RefCell<Ball>>, new_ball: &Rc<RefCell<Ball>>, is_left: bool)
         println!("Distance > this.radius: {}. Wrapping in new ball..", this.borrow().radius);
         let bounding = Rc::new(RefCell::new(this.borrow().bounding_ball(&new_ball.borrow())));
         println!("bounding {:?}", bounding);
-
-        match this.borrow().parent.clone() {
-            Some(old_parent) => {
+        println!("State of this {:?}", this);
+        
+        match this.borrow_mut().parent {
+            Some(ref mut old_parent) => {
                 println!("old_parent exists! wrapping with middle man.");
                 let mut bounding_mut = bounding.borrow_mut();
                 let mut old_parent_mut = old_parent.borrow_mut();
@@ -80,14 +81,23 @@ fn insert(this: &Rc<RefCell<Ball>>, new_ball: &Rc<RefCell<Ball>>, is_left: bool)
                 bounding_mut.right_child = Some(this.clone());
                 bounding_mut.left_child = Some(new_ball.clone());
                 new_ball.borrow_mut().parent = Some(bounding.clone());
-            }
+            },
 
             None => {
+                println!("State of this {:?}", this);
                 println!("No parent found. Must be root ball.");
-                // Must be the first ball in the tree.
                 let mut this_mut = this.borrow_mut();
+                // Must be the first ball in the tree.
                 println!("Borrowed this_mut");
-                this_mut.left_child = Some(this.clone());
+                let this_copy = Rc::new(RefCell::new(Ball {
+                    center: this_mut.center.clone(),
+                    radius: this_mut.radius,
+                    parent: this_mut.parent.clone(),
+                    left_child: this_mut.left_child.clone(),
+                    right_child: this_mut.right_child.clone()
+                }));
+                println!("Cloned self: {:?} {:?}", this, this_copy);
+                this_mut.left_child = Some(this_copy);
                 println!("Set new left_child");
                 this_mut.right_child = Some(new_ball.clone());
                 println!("Set new right_child");
@@ -100,14 +110,16 @@ fn insert(this: &Rc<RefCell<Ball>>, new_ball: &Rc<RefCell<Ball>>, is_left: bool)
     } else { // inject it into the closest child
         // let left_child_center = this.borrow().left_child.unwrap().borrow().center;
         // let right_child_center = this.borrow().right_child.unwrap().borrow().center;
-        // let left_dist = distance(&left_child_center, &new_ball.borrow().center);
+        // let left_dist = distance(
+        //     &left_child_center,
+        //     &new_ball.borrow().center);
         // let right_dist = distance(
-        //     &this).borrow().right_child.unwrap().borrow().center,
+        //     &right_child_center,
         //     &new_ball.borrow().center);
         // if left_dist < right_dist {
-        //     insert(this.borrow_mut().left_child.unwrap().clone(), new_ball, true);
+        //     insert(&this, &new_ball, true);
         // } else {
-        //     insert(this.borrow_mut().right_child.unwrap().clone(), new_ball, false);
+        //     insert(&this, &new_ball, false);
         // }
     }
 }
