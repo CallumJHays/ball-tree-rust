@@ -25,7 +25,7 @@ Create a new ball tree:
 let bt = BallTree::new()
 ```
 
-Insert Items into ball tree:
+Insert Items into ball tree. Note, `bt` is consumed when `push` is called on it:
 ```rust
 let vector: Vec<f32> = vec![1., 2., 3...];
 let updated_tree = bt.push(&vector);
