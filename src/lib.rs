@@ -1,32 +1,37 @@
 use std::cmp;
+use std::cell::RefCell;
+use std::rc::Rc;
 
 // A hyperdimensional ball that may have other balls as children
 #[derive(Debug, Clone)]
 pub struct Ball {
-    pub center: Vec<f32>,
-    pub radius: f32,
-    pub parent: Option<Box<Ball>>,
-    pub left_child: Option<Box<Ball>>,
-    pub right_child: Option<Box<Ball>>
+    center: Vec<f32>,
+    radius: f32,
+    parent: Option<Rc<RefCell<Ball>>>,
+    left_child: Option<Rc<RefCell<Ball>>>,
+    right_child: Option<Rc<RefCell<Ball>>>,
 }
 
 fn main() {
-    let b1 = Ball::new(vec![1., 3., 6., 3.]);
+    let mut b1 = Ball::new(vec![1., 3., 6., 3.]);
     println!("{:?}", b1);
-    
+
     let b2 = Ball::new(vec![3., 5., 8., 5.]);
     println!("{:?}", b2);
-    
-    let pb = b1.bounding_ball(&b2);
-    println!("{:?}", pb);
+
+    insert(b1.clone(), b2, false);
+    println!("{:?}", b1);
 }
 
 impl Ball {
-    fn new(features: Vec<f32>) -> Ball {
-        Ball {
-            center: features, radius: 0.,
-            parent: None, left_child: None, right_child: None
-        }
+    fn new(features: Vec<f32>) -> Rc<RefCell<Ball>> {
+        Rc::new(RefCell::new(Ball {
+            center: features,
+            radius: 0.,
+            parent: None,
+            left_child: None,
+            right_child: None,
+        }))
     }
 
     fn bounding_ball(&self, other: &Ball) -> Ball {
@@ -39,46 +44,62 @@ impl Ball {
         Ball {
             center: midpoint(&p1, &p2),
             radius: distance(&p1, &p2) / 2.,
-            parent: None, left_child: None, right_child: None
-        }
-    }
-
-    fn insert(&mut self, new_ball: Ball, is_left: bool) {
-        let dist = distance(&self.center, &new_ball.center);
-        // if outside of the ball, make a new parent ball and put both inside
-        if dist > self.radius {
-            match self.parent {
-                Some(ref mut old_parent) => {
-                    let mut new_parent = self.bounding_ball(&new_ball);
-                    if is_left {
-                        old_parent.left_child = Some(Box::new(new_parent));
-                    } else {
-                        old_parent.right_child = Some(Box::new(new_parent));
-                    };
-                    new_parent.parent = Some(*old_parent);
-                    new_parent.right_child = Some(Box::new(*self));
-                    new_parent.left_child = Some(Box::new(new_ball));
-                    self.parent = Some(Box::new(new_parent));
-                    new_ball.parent = Some(Box::new(new_parent));
-                },
-                
-                None => {
-                    // Must be the first ball in the tree.
-                    // this reference needs to stay the same for the tree to function, so instead we
-                    // inject a copy, and grow this ball to be the new parent.
-                    let new_self_blueprint = self.bounding_ball(&new_ball);
-                    self.left_child = Some(Box::new(*self));
-                    self.right_child = Some(Box::new(new_ball));
-                    self.center = new_self_blueprint.center;
-                    self.radius = new_self_blueprint.radius;
-                }
-            }
+            parent: None,
+            left_child: None,
+            right_child: None,
         }
     }
 
     // fn search_similar(&self, features: &Vec<f32>, limit: usize) {
 
     // }
+}
+
+
+fn insert(this: Rc<RefCell<Ball>>, new_ball: Rc<RefCell<Ball>>, is_left: bool) {
+    let dist = distance(&this.borrow().center, &new_ball.borrow().center);
+    // if outside of the ball, make a new parent ball and put both inside
+    if dist > this.borrow().radius {
+        let mut bounding = Rc::new(RefCell::new(this.borrow().bounding_ball(&new_ball.borrow())));
+
+        match this.borrow().parent.clone() {
+            Some(old_parent) => {
+                let mut bounding_mut = bounding.borrow_mut();
+                let mut old_parent_mut = old_parent.borrow_mut();
+                bounding_mut.parent = Some(old_parent.clone());
+                if is_left {
+                    old_parent_mut.left_child = Some(bounding.clone());
+                } else {
+                    old_parent_mut.right_child = Some(bounding.clone());
+                };
+                this.borrow_mut().parent = Some(bounding.clone());
+                bounding_mut.right_child = Some(this.clone());
+                bounding_mut.left_child = Some(new_ball.clone());
+                new_ball.borrow_mut().parent = Some(bounding.clone());
+            }
+
+            None => {
+                // Must be the first ball in the tree.
+                let mut this_mut = this.borrow_mut();
+                this_mut.left_child = Some(this.clone());
+                this_mut.right_child = Some(new_ball.clone());
+                this_mut.center = bounding.borrow().center.clone();
+                this_mut.radius = bounding.borrow().radius;
+            }
+        }
+    } else { // inject it into the closest child
+        // let left_child_center = this.borrow().left_child.unwrap().borrow().center;
+        // let right_child_center = this.borrow().right_child.unwrap().borrow().center;
+        // let left_dist = distance(&left_child_center, &new_ball.borrow().center);
+        // let right_dist = distance(
+        //     &this).borrow().right_child.unwrap().borrow().center,
+        //     &new_ball.borrow().center);
+        // if left_dist < right_dist {
+        //     insert(this.borrow_mut().left_child.unwrap().clone(), new_ball, true);
+        // } else {
+        //     insert(this.borrow_mut().right_child.unwrap().clone(), new_ball, false);
+        // }
+    }
 }
 
 
@@ -113,7 +134,7 @@ impl Ball {
 //     //             .search(&features, limit)
 //     //             .into_iter(|ball: Rc<RefCell<Ball>>| ball.clone().borrow_ref())
 //     //         },
-//     //         None => 
+//     //         None =>
 //     //     },
 //     //     self.first_ball.search(&features, limit)
 //     // }
@@ -151,14 +172,14 @@ fn magnitude(v1: &Vec<f32>) -> f32 {
 
 fn distance(v1: &Vec<f32>, v2: &Vec<f32>) -> f32 {
     (0..v1.len())
-    .map(|i| (v1[i] - v2[i]).powi(2))
-    .fold(0., |sum, x| sum + x)
-    .sqrt()
+        .map(|i| (v1[i] - v2[i]).powi(2))
+        .fold(0., |sum, x| sum + x)
+        .sqrt()
 }
 
 fn midpoint(v1: &Vec<f32>, v2: &Vec<f32>) -> Vec<f32> {
     (0..v1.len())
-    .map(|i| (v1[i] + v2[i]) / 2.)
-    .collect()
+        .map(|i| (v1[i] + v2[i]) / 2.)
+        .collect()
 }
 // yermyuurstd@om3-27@
