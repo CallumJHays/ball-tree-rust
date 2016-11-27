@@ -100,7 +100,7 @@ impl BallTree {
 
     fn bounding_ball(self, other: BallTree) -> BallTree {
         let (self_center, self_rad) = self._get_center_and_radius();
-        let (other_center, other_rad) = self._get_center_and_radius();
+        let (other_center, other_rad) = other._get_center_and_radius();
 
         let span = subtract_vec(&self_center, &other_center);
         let mag = magnitude(&span);
