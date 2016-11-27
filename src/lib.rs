@@ -1,5 +1,4 @@
-use std::cell::RefCell;
-use std::rc::Rc;
+use std::cmp::Ordering;
 
 #[cfg(test)]
 mod tests;
@@ -24,6 +23,49 @@ impl BallTree {
         self.push_node(&Point(features.clone()))
     }
 
+    pub fn nn_search(&self, features: &Vec<f32>, max_entries: &usize) -> Vec<Vec<f32>> {
+        let mut list = self.nn_search_node(&features, &max_entries);
+        list.sort_by(|a, b| {
+            distance(&a, &features)
+            .partial_cmp(
+                &distance(&b, &features)
+            )
+            .unwrap_or(Ordering::Equal)
+        });
+        list
+    }
+    
+    fn nn_search_node(&self, features: &Vec<f32>, max_entries: &usize) -> Vec<Vec<f32>> {
+        match self {
+            &Point(ref center) => vec![center.clone()],
+            &Ball(_, _, ref left, ref right) => {
+                let get_dist = |tree: &BallTree| match *tree {
+                    Point(ref center) | Ball(ref center, _, _, _) => distance(features, &center),
+                    Nil => panic!("The supplied tree us Nil!")
+                };
+                let left_dist = get_dist(&left);
+                let right_dist = get_dist(&right);
+
+                let mut candidates: Vec<Vec<f32>> = if left_dist < right_dist {
+                    left.nn_search(&features, &max_entries)
+                } else {
+                    right.nn_search(&features, &max_entries)
+                };
+
+                if candidates.len() < *max_entries {
+                    if left_dist < right_dist {
+                        candidates.append(&mut right.nn_search(&features, &max_entries));
+                    } else {
+                        candidates.append(&mut left.nn_search(&features, &max_entries));
+                    }
+                }
+
+                if candidates.len() > *max_entries { candidates[0..*max_entries].to_vec() } else { candidates }
+            },
+            &Nil => Vec::new()
+        }
+    }
+
     fn push_node(self, node: &BallTree) -> BallTree {
         match self {
             Nil => node.clone(),
@@ -33,7 +75,7 @@ impl BallTree {
                     let get_dist_rad = |tree: &BallTree| match *tree {
                         Point(ref center) => (distance(&node_center, &center), 0.),
                         Ball(ref center, rad, _, _) => (distance(&node_center, &center), rad),
-                        Nil => panic!("This ball has a Nil left or right child!")
+                        Nil => panic!("The supplied tree is Nil!")
                     };
 
                     let (left_dist, left_rad) = get_dist_rad(&left);
@@ -41,7 +83,6 @@ impl BallTree {
 
                     // if inside both balls, choose ball to push to based on distance
                     if left_dist <= left_rad || right_dist <= right_rad {
-
                         let (left_box, right_box) = if left_dist > left_rad {
                             (Box::new(left.push_node(node)), right)
                         } else if right_dist > right_rad {
@@ -60,7 +101,7 @@ impl BallTree {
                         old_self.bounding_ball(node.clone())
                     }
                 },
-                &Ball(ref node_center, ref node_rad, _, _) => panic!("Adding entire balls to ball tree is illegal!")
+                &Ball(_, _, _, _) => panic!("Adding entire balls to ball tree is illegal!")
             },
             Point(self_center) => Point(self_center).bounding_ball(node.clone())
         }
@@ -70,7 +111,7 @@ impl BallTree {
         let get_center_rad = |tree: &BallTree| match *tree {
             Point(ref center) => (center.clone(), 0.),
             Ball(ref center, rad, _, _) => (center.clone(), rad),
-            Nil => panic!("Bounding ball called on a Nil balltree")
+            Nil => panic!("The supplied tree is Nil!")
         };
 
         let (self_center, self_rad) = get_center_rad(&self);

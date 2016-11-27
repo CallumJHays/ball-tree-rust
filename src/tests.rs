@@ -132,3 +132,41 @@ fn ball_tree_push_test() {
         )
     );
 }
+
+fn simple_sample_tree() -> BallTree {
+    let features = [
+        vec![15., -7.],
+        vec![-20., -20.],
+        vec![9., 10.],
+        vec![6., 6.],
+        vec![-2., 10.],
+        vec![18., 5.],
+        vec![1., 1.],
+    ];
+
+    let mut bt = BallTree::new();
+    for feature in features.iter() {
+        bt = bt.push(&feature);
+    }
+
+    bt
+}
+
+fn complex_sample_tree() -> BallTree {
+    Nil
+}
+
+#[test]
+fn ball_tree_nn_search_test() {
+    let bt = simple_sample_tree();
+    let search_feature = vec![10., 10.];
+    let expected_res = vec![
+        vec![9., 10.],
+        vec![6., 6.],
+        vec![18., 5.],
+        vec![-2., 10.],
+        vec![1., 1.],
+    ];
+    
+    assert_eq!(bt.nn_search(&search_feature, &5), expected_res);
+}

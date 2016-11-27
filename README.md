@@ -31,9 +31,18 @@ let vector: Vec<f32> = vec![1., 2., 3...];
 let updated_tree = bt.push(&vector);
 ```
 
+Search for k nearest neighbors in a ball tree.
+```rust
+let search_point: Vec<f32> = vec![1., 2., 3...];
+let knn: Vec<Vec<f32>> = bt.nn_search(&search_point, 5);
+// knn will be top 5 nearest points in the tree,
+// assuming at least 5 points in the ball tree.
+```
+
 ## In Progress:
-- k Nearest Neighbor Search
+- custom metric other than euclidean distance
 - k-d construction (load tree from collection)
+- tree flatten to collection (for saving)
 - delete vectors from ball tree
 - implement as generic
-- custom metric other than euclidean distance
+- allow tree reshape for better search performance
