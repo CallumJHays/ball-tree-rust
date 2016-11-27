@@ -1,5 +1,6 @@
 use super::*;
-use BallTree::*;
+use ball_tree::BallTree::*;
+use vector_math::*;
 
 fn test_vec() -> Vec<f32> {
     vec![1., 2., 3., 4.]
@@ -150,10 +151,6 @@ fn simple_sample_tree() -> BallTree {
     }
 
     bt
-}
-
-fn complex_sample_tree() -> BallTree {
-    Nil
 }
 
 #[test]
