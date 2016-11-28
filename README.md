@@ -79,7 +79,7 @@ impl Baller for CustomType {
 ```
 
 Use the ball tree:
-```
+```rust
 let bt: BallTree<CustomType> = BallTree::new();
 let bt_updated = bt.push(&CustomType {
     id: 1,
