@@ -2,22 +2,45 @@ use std::cmp::Ordering;
 use vector_math::*;
 use self::BallTree::*; // shorthand enum
 
+pub trait Baller {
+    fn metric(&self, &Self) -> f32;
+    fn midpoint(&self, &f32, &Self, &f32) -> Self;
+}
+
+impl Baller for Vec<f32> {
+    fn metric(&self, other: &Vec<f32>) -> f32 {
+        distance(&self, &other)
+    }
+
+    fn midpoint(&self, self_rad: &f32, other: &Vec<f32>, other_rad: &f32) -> Vec<f32> {
+        let span = subtract_vec(&self, &other);
+        let mag = magnitude(&span);
+        let unit_vec = divide_scal(&span, &mag);
+        let p1 = add_vec(&self, &multiply_scal(&unit_vec, &self_rad));
+        let p2 = subtract_vec(&other, &multiply_scal(&unit_vec, &other_rad));
+        midpoint(&p2, &p1)
+    }
+}
+
 // An immutable hyperdimensional ball tree
 #[derive(Clone, Debug, PartialEq)]
-pub enum BallTree {
-    Point(Vec<f32>),
-    //     center,   rad, left,      right
-    Ball(Vec<f32>, f32, Box<BallTree>, Box<BallTree>),
+pub enum BallTree<T: Baller + Clone> {
+    Point(T),
+    Ball(T, f32, Box<BallTree<T>>, Box<BallTree<T>>),
     Nil,
 }
 
-impl BallTree {
-    pub fn new() -> BallTree { Nil }
+impl<T: Baller + Clone> BallTree<T> {
+    pub fn new() -> BallTree<T> { Nil }
 
-    pub fn push(self, features: &Vec<f32>) -> BallTree {
-        if self != Nil {
-            let (center, rad) = self._get_center_and_radius();
-            let dist = distance(&center, &features);
+    pub fn push(self, features: &T) -> BallTree<T> {
+        let is_not_nil = match &self {
+            &Nil => false,
+            _ => true
+        };
+        if is_not_nil {
+            let (key, rad) = self._get_key_and_radius();
+            let dist = key.metric(&features);
             if dist > rad {
                 return self._bounding_ball(Point(features.clone()))
             }
@@ -25,34 +48,33 @@ impl BallTree {
         self._push_node(&Point(features.clone()))
     }
 
-    pub fn nn_search(&self, features: &Vec<f32>, max_entries: &usize) -> Vec<Vec<f32>> {
+    pub fn nn_search(&self, features: &T, max_entries: &usize) -> Vec<T> {
         let mut list = self._nn_search_node(&features, &max_entries);
         list.sort_by(|a, b| {
-            distance(&a, &features)
+            a.metric(&features)
             .partial_cmp(
-                &distance(&b, &features)
+                &b.metric(&features)
             )
             .unwrap_or(Ordering::Equal)
         });
         list
     }
     
-    fn _nn_search_node(&self, features: &Vec<f32>, max_entries: &usize) -> Vec<Vec<f32>> {
+    fn _nn_search_node(&self, features: &T, max_entries: &usize) -> Vec<T> {
         match *self {
             Point(ref center) => vec![center.clone()],
             Ball(_, _, ref left, ref right) => {
-                let (left_center, left_rad) = left._get_center_and_radius();
-                let (right_center, right_rad) = right._get_center_and_radius();
-                let left_dist = distance(&left_center, &features);
-                let right_dist = distance(&right_center, &features);
+                let (left_key, left_rad) = left._get_key_and_radius();
+                let (right_key, right_rad) = right._get_key_and_radius();
+                let left_dist = features.metric(&left_key);
+                let right_dist = features.metric(&right_key);
 
-                let mut candidates: Vec<Vec<f32>> =
-                    // if inside a ball
-                    if left_dist <= left_rad || right_dist <= right_rad {
-                        if left_dist >= left_rad {
-                            right._nn_search_node(&features, &max_entries)
-                        } else {
+                let mut candidates: Vec<T> =
+                    if left_dist <= left_rad || right_dist <= right_rad { // if inside either ball
+                        if left_dist <= left_rad {
                             left._nn_search_node(&features, &max_entries)
+                        } else {
+                            right._nn_search_node(&features, &max_entries)
                         }
                     } else { // choose the closest one
                         if left_dist < right_dist {
@@ -76,16 +98,16 @@ impl BallTree {
         }
     }
 
-    fn _push_node(self, node: &BallTree) -> BallTree {
+    fn _push_node(self, node: &BallTree<T>) -> BallTree<T> {
         match self {
             Nil => node.clone(),
-            Ball(self_center, self_rad, left, right) => match *node {
+            Ball(self_key, self_rad, left, right) => match *node {
                 Nil => Nil,
-                Point(ref node_center) => {
-                    let (left_center, left_rad) = left._get_center_and_radius();
-                    let (right_center, right_rad) = right._get_center_and_radius();
-                    let left_dist = distance(&left_center, &node_center);
-                    let right_dist = distance(&right_center, &node_center);
+                Point(ref node_key) => {
+                    let (left_key, left_rad) = left._get_key_and_radius();
+                    let (right_key, right_rad) = right._get_key_and_radius();
+                    let left_dist = node_key.metric(&left_key);
+                    let right_dist = node_key.metric(&right_key);
 
                     // if inside either ball, choose which ball to insert the node into
                     let (new_left, new_right) = if left_dist <= left_rad || right_dist <= right_rad {
@@ -102,30 +124,25 @@ impl BallTree {
                             (left, Box::new(right._bounding_ball(node.clone())))
                         }
                     };
-                    Ball(self_center, self_rad, new_left, new_right)
+                    Ball(self_key, self_rad, new_left, new_right)
                 },
                 Ball(_, _, _, _) => panic!("Adding entire balls to ball tree is not supported!")
             },
-            Point(self_center) => Point(self_center)._bounding_ball(node.clone())
+            Point(self_key) => Point(self_key)._bounding_ball(node.clone())
         }
     }
 
-    pub fn _bounding_ball(self, other: BallTree) -> BallTree {
-        let (self_center, self_rad) = self._get_center_and_radius();
-        let (other_center, other_rad) = other._get_center_and_radius();
+    pub fn _bounding_ball(self, other: BallTree<T>) -> BallTree<T> {
+        let (self_key, self_rad) = self._get_key_and_radius();
+        let (other_key, other_rad) = other._get_key_and_radius();
 
-        let span = subtract_vec(&self_center, &other_center);
-        let mag = magnitude(&span);
-        let unit_vec = divide_scal(&span, &mag);
-        let p1 = add_vec(&self_center, &multiply_scal(&unit_vec, &self_rad));
-        let p2 = subtract_vec(&other_center, &multiply_scal(&unit_vec, &other_rad));
-        Ball(midpoint(&p1, &p2), distance(&p1, &p2) / 2., Box::new(self), Box::new(other))
+        Ball(self_key.midpoint(&self_rad, &other_key, &other_rad), self_key.metric(&other_key) / 2., Box::new(self), Box::new(other))
     }
 
-    fn _get_center_and_radius(&self) -> (Vec<f32>, f32) {
+    fn _get_key_and_radius(&self) -> (T, f32) {
         match *self {
-            Point(ref center) => (center.clone(), 0.),
-            Ball(ref center, ref rad, _, _) => (center.clone(), *rad),
+            Point(ref key) => (key.clone(), 0.),
+            Ball(ref key, ref rad, _, _) => (key.clone(), *rad),
             Nil => panic!("The supplied tree is Nil!")
         }
     }
