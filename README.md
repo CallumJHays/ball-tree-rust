@@ -2,7 +2,7 @@
 
 Immutable Ball Tree implementation in Rust.
 
-Ball Trees are Binary-Tree-like data structures useful for storing and searching for hyperdimensional (of more than 3 dimensions) vectors, or data that is related by a measure of similarity. The Ball Tree is inherently imbalanced, so lookup is likely to be **higher** than `log(n)` in the majority of cases. Ball Trees are fantastic for quickly solving nearest-neighbor and k-means clustering problems for larger datasets. They're also very applicable to many machine learning applications in production, as they allow for efficient latent feature space search, useful in recommendation systems.
+Ball Trees are Binary-Tree-like data structures useful for storing and searching for hyperdimensional (of more than 3 dimensions) vectors, or data that is related by a measure of difference between two points. The Ball Tree is inherently imbalanced, so lookup is likely to be **higher** than `log(n)` in the majority of cases. Ball Trees are fantastic for quickly solving nearest-neighbor and k-means clustering problems for larger datasets. They're also very applicable to many machine learning applications in production, as they allow for efficient latent feature space search, useful in recommendation systems.
 
 ## Usage
 Add crate to cargo.toml
@@ -81,8 +81,22 @@ impl Baller for CustomType {
 }
 ```
 
+## Testing
+For sanity check tests run `cargo test`.
+
+## Benchmarking
+For benchmarking results run `cargo bench`.
+Note that for each test, the average random tree generation time must be subtracted.
+e.g. the true result of `ball_tree_push_18x10_bench` is actually (the result of `ball_tree_push_18x10_bench`) - (the result of `random_benchmark_tree_18x10`).
+
+### Results
+If you just want to see some quick results and graphs, check out these:
+
+***TODO***
+
 ## In Progress:
-- k-d construction (load tree from collection)
-- tree flatten to collection (for saving)
+- benchmarking results
+- prevent stack overflows on large trees
+- load performance (optimal tree construction)
 - delete nodes from ball tree
 - allow tree reshape for better search performance
