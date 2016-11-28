@@ -17,7 +17,7 @@ Import crate for use:
 ```rust
 extern crate ball_tree;
 
-use ball_tree::BallTree;
+use ball_tree::ball_tree::BallTree;
 ```
 
 Create a new ball tree:
