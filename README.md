@@ -65,15 +65,19 @@ impl Baller for CustomType {
 
     // Midpoint. The (halfway point) from ball 1 to ball 2.
     // Could be based on euclidean distance, or an english dictionary lookup!
-    fn midpoint(&self, self_rad: &f32, other: &CustomType) -> f32 {
+    fn midpoint(&self, self_rad: &f32, other: &CustomType, other_rad: &f32) -> CustomType {
         use ball_tree::vector_math::*;
         // compute the spacial midpoint using geometry
-        let span = subtract_vec(&self, &other);
+        let span = subtract_vec(&self.vector, &other.vector);
         let mag = magnitude(&span);
         let unit_vec = divide_scal(&span, &mag);
-        let p1 = add_vec(&self, &multiply_scal(&unit_vec, &self_rad));
-        let p2 = subtract_vec(&other, &multiply_scal(&unit_vec, &other_rad));
-        midpoint(&p1, &p2)
+        let p1 = add_vec(&self.vector, &multiply_scal(&unit_vec, &self_rad));
+        let p2 = subtract_vec(&other.vector, &multiply_scal(&unit_vec, &other_rad));
+        CustomType {
+            id: 0,
+            name: "",
+            vector: midpoint(&p1, &p2)
+        }
     }
 }
 ```
