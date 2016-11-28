@@ -81,6 +81,16 @@ impl Baller for CustomType {
 }
 ```
 
+Use the ball tree:
+```
+let bt: BallTree<CustomType> = BallTree::new();
+let bt_updated = bt.push(&CustomType {
+    id: 1,
+    name: "The Origin",
+    vector: vec![0., 0., 0., 0., 0.,]
+});
+```
+
 ## In Progress:
 - k-d construction (load tree from collection)
 - tree flatten to collection (for saving)
