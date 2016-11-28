@@ -82,15 +82,7 @@ impl Baller for CustomType {
 }
 ```
 
-Use the ball tree:
-```rust
-let bt: BallTree<CustomType> = BallTree::new();
-let bt_updated = bt.push(&CustomType {
-    id: 1,
-    name: "The Origin",
-    vector: vec![0., 0., 0., 0., 0.,]
-});
-```
+<<<<<<< HEAD
 ## Testing
 For sanity check tests run `cargo test`.
 
@@ -103,6 +95,17 @@ e.g. the true result of `ball_tree_push_18x10_bench` is actually (the result of 
 If you just want to see some quick results and graphs, check out these:
 
 ***TODO***
+=======
+Use the ball tree:
+```rust
+let bt: BallTree<CustomType> = BallTree::new();
+let bt_updated = bt.push(&CustomType {
+    id: 1,
+    name: "The Origin",
+    vector: vec![0., 0., 0., 0., 0.,]
+});
+```
+>>>>>>> 5e1b22082297780a5b8ca7ab6e9ba485b7bef8d2
 
 ## In Progress:
 - benchmarking results

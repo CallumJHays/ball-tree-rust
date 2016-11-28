@@ -58,39 +58,29 @@ struct CustomType {
 impl Baller for CustomType {
     // Distance. Generally how far apart the center of the balls are away from each-other
     fn metric(&self, other: &CustomType) -> f32 {
-        use ball_tree::vector_math::*;
-        
-        distance(&self.vector, &other.vector) // euclidean distance
+        // compute the euclidean distance between the two vectors
+        (0..self.vector.len())
+            .map(|i| (self.vector[i] - other.vector[i]).powi(2))
+            .fold(0., |sum, x| sum + x)
+            .sqrt()
     }
 
     // Midpoint. The (halfway point) from ball 1 to ball 2.
     // Could be based on euclidean distance, or an english dictionary lookup!
-    fn midpoint(&self, self_rad: &f32, other: &CustomType, other_rad: &f32) -> CustomType {
-        use ball_tree::vector_math::*;
+    fn midpoint(&self, self_rad: &f32, other: &CustomType) -> f32 {
         // compute the spacial midpoint using geometry
-        let span = subtract_vec(&self.vector, &other.vector);
+        let span = subtract_vec(&self, &other);
         let mag = magnitude(&span);
         let unit_vec = divide_scal(&span, &mag);
-        let p1 = add_vec(&self.vector, &multiply_scal(&unit_vec, &self_rad));
-        let p2 = subtract_vec(&other.vector, &multiply_scal(&unit_vec, &other_rad));
-        CustomType {
-            id: 0,
-            name: "",
-            vector: midpoint(&p1, &p2)
-        }
+        let p1 = add_vec(&self, &multiply_scal(&unit_vec, &self_rad));
+        let p2 = subtract_vec(&other, &multiply_scal(&unit_vec, &other_rad));
+        (0..p1.len())
+            .map(|i| (p1[i] + p2[i]) / 2.)
+            .collect()
     }
 }
 ```
 
-Use the ball tree:
-```rust
-let bt: BallTree<CustomType> = BallTree::new();
-let bt_updated = bt.push(&CustomType {
-    id: 1,
-    name: "The Origin",
-    vector: vec![0., 0., 0., 0., 0.,]
-});
-```
 ## Testing
 For sanity check tests run `cargo test`.
 
