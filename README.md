@@ -58,25 +58,22 @@ struct CustomType {
 impl Baller for CustomType {
     // Distance. Generally how far apart the center of the balls are away from each-other
     fn metric(&self, other: &CustomType) -> f32 {
-        // compute the euclidean distance between the two vectors
-        (0..self.vector.len())
-            .map(|i| (self.vector[i] - other.vector[i]).powi(2))
-            .fold(0., |sum, x| sum + x)
-            .sqrt()
+        use ball_tree::vector_math::*;
+        
+        distance(&self.vector, &other.vector) // euclidean distance
     }
 
     // Midpoint. The (halfway point) from ball 1 to ball 2.
     // Could be based on euclidean distance, or an english dictionary lookup!
     fn midpoint(&self, self_rad: &f32, other: &CustomType) -> f32 {
+        use ball_tree::vector_math::*;
         // compute the spacial midpoint using geometry
         let span = subtract_vec(&self, &other);
         let mag = magnitude(&span);
         let unit_vec = divide_scal(&span, &mag);
         let p1 = add_vec(&self, &multiply_scal(&unit_vec, &self_rad));
         let p2 = subtract_vec(&other, &multiply_scal(&unit_vec, &other_rad));
-        (0..p1.len())
-            .map(|i| (p1[i] + p2[i]) / 2.)
-            .collect()
+        midpoint(&p1, &p2)
     }
 }
 ```
