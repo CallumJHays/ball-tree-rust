@@ -89,6 +89,20 @@ fn bounding_ball_test() {
             Box::new(p2())
         )
     );
+
+    let ball1 = || p1()._bounding_ball(p2());
+    let p3 = || Point(vec![12., 0., 0., 0.]);
+
+    assert_eq!(
+        p3()._bounding_ball(ball1()),
+        Ball(vec![4., 0., 0., 0.], 8.,
+            Box::new(p3()),
+            Box::new(Ball(vec![0., 0., 0., 0.], 4.,
+                Box::new(p1()),
+                Box::new(p2())
+            ))
+        )
+    )
 }
 
 #[test]
@@ -154,6 +168,41 @@ fn ball_tree_push_test() {
             Box::new(Point(vec2()))
         )
     );
+
+    // push a point that fits outside of left but closer to right.
+    let vec4 = || vec![-5., 6., -7., 7.];
+    let ball4 = || Point(vec2())._bounding_ball(Point(vec4()));
+    let center4 = || {
+        match ball4() {
+            Ball(center, _, _, _) => center,
+            _ => panic!("What the...")
+        }
+    };
+    let radius4 = || {
+        match ball4() {
+            Ball(_, radius, _, _) => radius,
+            _ => panic!("What the...")
+        }
+    };
+    let tree4 = tree3.push(&vec4());
+    assert_eq!(tree4,
+        Ball(
+            center2(),
+            radius2(),
+            Box::new(Ball(
+                center3(),
+                radius3(),
+                Box::new(Point(vec1())),
+                Box::new(Point(vec3()))
+            )),
+            Box::new(Ball(
+                center4(),
+                radius4(),
+                Box::new(Point(vec2())),
+                Box::new(Point(vec4()))
+            ))
+        )
+    )
 }
 
 fn simple_sample_features() -> [Vec<f32>; 7] {
@@ -212,6 +261,7 @@ fn ball_tree_flatten_test() {
 fn ball_tree_load_test() {
     let features = simple_sample_features();
     let bt = BallTree::load(&features.to_vec());
+
     let flattened = bt.flatten();
 
     assert_eq!(flattened.len(), features.len());
@@ -245,13 +295,6 @@ fn random_benchmark_tree(size: usize, length: usize) -> BallTree<Vec<f32>> {
 }
 
 fn pow2(power: u32) -> usize { (2 as usize).pow(power) }
-
-#[test]
-fn preview_4x2_test() {
-    let SIZE = pow2(8);
-    let LENGTH = pow2(10);
-    assert_eq!(random_benchmark_tree(SIZE, LENGTH), Nil);
-}
 
 // ##################### RANDOM TREE BENCHMARK #####################
 /*

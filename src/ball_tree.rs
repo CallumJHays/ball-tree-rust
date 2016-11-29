@@ -57,7 +57,7 @@ impl<T: Baller + Clone> BallTree<T> {
                 return self._bounding_ball(Point(features.clone()))
             }
         }
-        self._push_node(&Point(features.clone()), move |me| me)
+        self._push_node(&Point(features.clone()))
     }
 
     pub fn nn_search(&self, features: &T, max_entries: &usize) -> Vec<T> {
@@ -122,14 +122,13 @@ impl<T: Baller + Clone> BallTree<T> {
         }
     }
 
-    fn _push_node<F>(self, node: &BallTree<T>, ancestors: F) -> BallTree<T>
-                                    where F: Fn(BallTree<T>) -> BallTree<T> {
+    fn _push_node(self, node: &BallTree<T>) -> BallTree<T> {
         match self {
             Nil => node.clone(),
             Ball(self_key, self_rad, left, right) => match *node {
                 Nil => Nil,
                 Point(ref node_key) => {
-                    let (do_left, to_bound) = {
+                    let (new_left, new_right) = {
                         let (left_key, left_rad) = left._get_key_and_radius();
                         let (right_key, right_rad) = right._get_key_and_radius();
                         let left_dist = node_key.metric(&left_key);
@@ -137,42 +136,36 @@ impl<T: Baller + Clone> BallTree<T> {
 
                         // if inside either ball, choose which ball to insert the node into
                         if left_dist <= left_rad || right_dist <= right_rad {
-                            if left_dist <= left_rad { (true, false) } else { (false, false) }
+                            if left_dist <= left_rad {
+                                (Box::new(left._push_node(node)), right)
+                            } else {
+                                (left, Box::new(right._push_node(node)))
+                            }
                         } else {
                             // node is in neither left nor right, wrap in new ball with the closest child
-                            if left_dist < right_dist { (true, true) } else { (false, true) }
+                            if left_dist < right_dist {
+                                (Box::new(left._bounding_ball(node.clone())), right)
+                            } else {
+                                (left, Box::new(right._bounding_ball(node.clone())))
+                            }
                         }
                     };
 
-                    if to_bound {
-                        if do_left {
-                            Ball(self_key, self_rad, Box::new(left._bounding_ball(node.clone())), right)
-                        } else {
-                            Ball(self_key, self_rad, left, Box::new(right._bounding_ball(node.clone())))
-                        }
-                    } else {
-                        if do_left {
-                            left._push_node(node, move |new_left| {
-                                ancestors(Ball(self_key, self_rad, Box::new(new_left), right)) })
-                        } else {
-                            right._push_node(node, move |new_right| {
-                                ancestors(Ball(self_key, self_rad, left, Box::new(new_right))) })
-                        }
-                    }
+                    Ball(self_key, self_rad, new_left, new_right)
                 },
                 Ball(_, _, _, _) => panic!("Adding entire balls to ball tree is not supported!")
             },
-            Point(self_key) => ancestors(Point(self_key)._bounding_ball(node.clone()))
+            Point(self_key) => Point(self_key)._bounding_ball(node.clone())
         }
     }
 
     pub fn _bounding_ball(self, other: BallTree<T>) -> BallTree<T> {
         let (self_key, self_rad) = self._get_key_and_radius();
         let (other_key, other_rad) = other._get_key_and_radius();
-
+        let midpoint = self_key.midpoint(&self_rad, &other_key, &other_rad);
         Ball(
-            self_key.midpoint(&self_rad, &other_key, &other_rad),
-            self_key.metric(&other_key) / 2.,
+            midpoint.clone(),
+            self_key.metric(&midpoint),
             Box::new(self),
             Box::new(other))
     }
