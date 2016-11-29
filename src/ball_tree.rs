@@ -128,7 +128,7 @@ impl<T: Baller + Clone> BallTree<T> {
             Ball(self_key, self_rad, left, right) => match *node {
                 Nil => Nil,
                 Point(ref node_key) => {
-                    let (modify_left, to_bound) = {
+                    let (new_left, new_right) = {
                         let (left_key, left_rad) = left._get_key_and_radius();
                         let (right_key, right_rad) = right._get_key_and_radius();
                         let left_dist = node_key.metric(&left_key);
@@ -137,33 +137,21 @@ impl<T: Baller + Clone> BallTree<T> {
                         // if inside either ball, choose which ball to insert the node into
                         if left_dist <= left_rad || right_dist <= right_rad {
                             if left_dist <= left_rad {
-                                (true, false)
+                                (Box::new(left._push_node(node)), right)
                             } else {
-                                (false, false)
+                                (left, Box::new(right._push_node(node)))
                             }
                         } else {
                             // node is in neither left nor right, wrap in new ball with the closest child
                             if left_dist < right_dist {
-                                (true, true)
+                                (Box::new(left._bounding_ball(node.clone())), right)
                             } else {
-                                (false, true)
+                                (left, Box::new(right._bounding_ball(node.clone())))
                             }
                         }
                     };
-                    
-                    if modify_left {
-                        if to_bound {
-                            Ball(self_key, self_rad, Box::new(left._bounding_ball(node.clone())), right)
-                        } else {
-                            Ball(self_key, self_rad, Box::new(left._push_node(node)), right)
-                        }
-                    } else {
-                        if to_bound {
-                            Ball(self_key, self_rad, left, Box::new(right._bounding_ball(node.clone())))
-                        } else {
-                            Ball(self_key, self_rad, left, Box::new(right._push_node(node)))
-                        }
-                    }
+
+                    Ball(self_key, self_rad, new_left, new_right)
                 },
                 Ball(_, _, _, _) => panic!("Adding entire balls to ball tree is not supported!")
             },
@@ -175,7 +163,11 @@ impl<T: Baller + Clone> BallTree<T> {
         let (self_key, self_rad) = self._get_key_and_radius();
         let (other_key, other_rad) = other._get_key_and_radius();
 
-        Ball(self_key.midpoint(&self_rad, &other_key, &other_rad), self_key.metric(&other_key) / 2., Box::new(self), Box::new(other))
+        Ball(
+            self_key.midpoint(&self_rad, &other_key, &other_rad),
+            self_key.metric(&other_key) / 2.,
+            Box::new(self),
+            Box::new(other))
     }
 
     fn _get_key_and_radius(&self) -> (T, f32) {

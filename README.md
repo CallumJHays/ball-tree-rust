@@ -96,9 +96,19 @@ let bt_updated = bt.push(&CustomType {
 For sanity check tests run `cargo test`.
 
 ## Benchmarking
-For benchmarking results run `cargo bench`.
-Note that for each test, the average random tree generation time must be subtracted.
-e.g. the true result of `ball_tree_push_18x10_bench` is actually (the result of `ball_tree_push_18x10_bench`) - (the result of `random_benchmark_tree_18x10`).
+For benchmarking results run `cargo bench`. 
+Quite a lot of time (hours) is required to run the entire benchmarking suite.
+If you're only interested in a few things, please comment out what you aren not interested in.
+The naming scheme for benchmarks is as follows:
+
+`<benchmark_name>_<ball_tree_size>_<vector_size>_bench`
+Where `ball_tree_size` is expressed as actual_size = 2^`ball_tree_size`
+and `vector_size` is expressed as vector_dimensions = 2^`vector_size`
+
+Note that for each test, the average time taken to clone the tree must be subtracted.
+e.g. the true result of `ball_tree_push_18x10_bench` is actually:
+
+(the result of `ball_tree_push_18x10_bench`) - (the result of `clone_tree_18x10_bench`).
 
 ### Results
 If you just want to see some quick results and graphs, check out these:
