@@ -72,12 +72,6 @@ fn midpoint_test() {
 //
 
 #[test]
-fn new_ball_tree_test() {
-    let nil_tree: BallTree<Vec<f32>> = BallTree::new();
-    assert_eq!(nil_tree, Nil);
-}
-
-#[test]
 fn bounding_ball_test() {
     let p1 = || Point(vec![2., 2., 2., 2.]);
     let p2 = || Point(vec![-2., -2., -2., -2.]);
@@ -307,284 +301,284 @@ Free memory required to run an AxB benchmark is (roughly):
 
 */
 //--------------------- 256 length vectors ---------------------
-#[bench]
-fn clone_tree_10x8_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(10);
-    let LENGTH = pow2(8);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
-#[bench]
-fn clone_tree_14x8_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(14);
-    let LENGTH = pow2(8);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
-#[bench]
-fn clone_tree_18x8_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(18);
-    let LENGTH = pow2(8);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
-#[bench]
-fn clone_tree_20x8_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(20);
-    let LENGTH = pow2(8);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
+// #[bench]
+// fn clone_tree_10x8_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(10);
+//     let LENGTH = pow2(8);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
+// #[bench]
+// fn clone_tree_14x8_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(14);
+//     let LENGTH = pow2(8);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
+// #[bench]
+// fn clone_tree_18x8_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(18);
+//     let LENGTH = pow2(8);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
+// #[bench]
+// fn clone_tree_20x8_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(20);
+//     let LENGTH = pow2(8);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
 
-//--------------------- 512 length vectors ---------------------
-#[bench]
-fn clone_tree_10x9_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(10);
-    let LENGTH = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
-#[bench]
-fn clone_tree_14x9_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(14);
-    let LENGTH = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
-#[bench]
-fn clone_tree_18x9_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(18);
-    let LENGTH = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
-#[bench]
-fn clone_tree_20x9_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(20);
-    let LENGTH = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
+// //--------------------- 512 length vectors ---------------------
+// #[bench]
+// fn clone_tree_10x9_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(10);
+//     let LENGTH = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
+// #[bench]
+// fn clone_tree_14x9_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(14);
+//     let LENGTH = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
+// #[bench]
+// fn clone_tree_18x9_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(18);
+//     let LENGTH = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
+// #[bench]
+// fn clone_tree_20x9_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(20);
+//     let LENGTH = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
 
-//--------------------- 1024 length vectors ---------------------
-#[bench]
-fn clone_tree_10x10_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(10);
-    let LENGTH = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
-#[bench]
-fn clone_tree_14x10_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(14);
-    let LENGTH = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
-#[bench]
-fn clone_tree_18x10_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(18);
-    let LENGTH = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
-#[bench]
-fn clone_tree_20x10_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(20);
-    let LENGTH = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone())
-}
+// //--------------------- 1024 length vectors ---------------------
+// #[bench]
+// fn clone_tree_10x10_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(10);
+//     let LENGTH = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
+// #[bench]
+// fn clone_tree_14x10_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(14);
+//     let LENGTH = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
+// #[bench]
+// fn clone_tree_18x10_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(18);
+//     let LENGTH = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
+// #[bench]
+// fn clone_tree_20x10_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(20);
+//     let LENGTH = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone())
+// }
 
-// //################## PUSH BENCHMARKS ##########################
-// //----------------- 256 length vector benchmarks --------------
+// // //################## PUSH BENCHMARKS ##########################
+// // //----------------- 256 length vector benchmarks --------------
 
-#[bench]
-fn ball_tree_push_10x8_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(10);
-    let SIZE = pow2(8);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_10x8_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(10);
+//     let SIZE = pow2(8);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-#[bench]
-fn ball_tree_push_14x8_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(14);
-    let SIZE = pow2(8);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_14x8_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(14);
+//     let SIZE = pow2(8);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-#[bench]
-fn ball_tree_push_18x8_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(18);
-    let SIZE = pow2(8);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_18x8_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(18);
+//     let SIZE = pow2(8);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-#[bench]
-fn ball_tree_push_20x8_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(20);
-    let SIZE = pow2(8);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_20x8_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(20);
+//     let SIZE = pow2(8);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-//----------------- 512 length vector benchmarks --------------
+// //----------------- 512 length vector benchmarks --------------
 
-#[bench]
-fn ball_tree_push_10x9_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(10);
-    let SIZE = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_10x9_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(10);
+//     let SIZE = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-#[bench]
-fn ball_tree_push_14x9_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(14);
-    let SIZE = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_14x9_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(14);
+//     let SIZE = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-#[bench]
-fn ball_tree_push_18x9_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(18);
-    let SIZE = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_18x9_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(18);
+//     let SIZE = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-#[bench]
-fn ball_tree_push_20x9_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(20);
-    let SIZE = pow2(9);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_20x9_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(20);
+//     let SIZE = pow2(9);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-//----------------- 1024 length vector benchmarks --------------
+// //----------------- 1024 length vector benchmarks --------------
 
-#[bench]
-fn ball_tree_push_10x10_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(10);
-    let SIZE = pow2(10);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_10x10_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(10);
+//     let SIZE = pow2(10);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-#[bench]
-fn ball_tree_push_14x10_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(14);
-    let SIZE = pow2(10);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_14x10_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(14);
+//     let SIZE = pow2(10);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-#[bench]
-fn ball_tree_push_18x10_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(18);
-    let SIZE = pow2(10);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_18x10_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(18);
+//     let SIZE = pow2(10);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-#[bench]
-fn ball_tree_push_20x10_bench(b: &mut test::Bencher) {
-    let LENGTH = pow2(20);
-    let SIZE = pow2(10);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-}
+// #[bench]
+// fn ball_tree_push_20x10_bench(b: &mut test::Bencher) {
+//     let LENGTH = pow2(20);
+//     let SIZE = pow2(10);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+// }
 
-// ################# SEARCH BENCHMARKS ######################
-// ############## USING 512 LENGTH VECTORS ##################
+// // ################# SEARCH BENCHMARKS ######################
+// // ############## USING 512 LENGTH VECTORS ##################
 
-// ---------------------- TOP 1 --------------------------
+// // ---------------------- TOP 1 --------------------------
 
-#[bench]
-fn ball_tree_search_0_from_10_bench(b: &mut test::Bencher) {
-    let SEARCH = pow2(0);
-    let LENGTH = pow2(9);
-    let SIZE = pow2(10);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_0_from_10_bench(b: &mut test::Bencher) {
+//     let SEARCH = pow2(0);
+//     let LENGTH = pow2(9);
+//     let SIZE = pow2(10);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }
 
-#[bench]
-fn ball_tree_search_0_from_14_bench(b: &mut test::Bencher) {
-    let SEARCH = pow2(0);
-    let LENGTH = pow2(9);
-    let SIZE = pow2(14);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_0_from_14_bench(b: &mut test::Bencher) {
+//     let SEARCH = pow2(0);
+//     let LENGTH = pow2(9);
+//     let SIZE = pow2(14);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }
 
-#[bench]
-fn ball_tree_search_0_from_18_bench(b: &mut test::Bencher) {
-    let SEARCH = pow2(0);
-    let LENGTH = pow2(9);
-    let SIZE = pow2(18);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_0_from_18_bench(b: &mut test::Bencher) {
+//     let SEARCH = pow2(0);
+//     let LENGTH = pow2(9);
+//     let SIZE = pow2(18);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }
 
-// ---------------------- TOP 4 --------------------------
+// // ---------------------- TOP 4 --------------------------
 
-#[bench]
-fn ball_tree_search_2_from_10_bench(b: &mut test::Bencher) {
-    let SEARCH = pow2(2);
-    let LENGTH = pow2(9);
-    let SIZE = pow2(10);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_2_from_10_bench(b: &mut test::Bencher) {
+//     let SEARCH = pow2(2);
+//     let LENGTH = pow2(9);
+//     let SIZE = pow2(10);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }
 
-#[bench]
-fn ball_tree_search_2_from_14_bench(b: &mut test::Bencher) {
-    let SEARCH = pow2(2);
-    let LENGTH = pow2(9);
-    let SIZE = pow2(14);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_2_from_14_bench(b: &mut test::Bencher) {
+//     let SEARCH = pow2(2);
+//     let LENGTH = pow2(9);
+//     let SIZE = pow2(14);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }
 
-#[bench]
-fn ball_tree_search_2_from_18_bench(b: &mut test::Bencher) {
-    let SEARCH = pow2(2);
-    let LENGTH = pow2(9);
-    let SIZE = pow2(18);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_2_from_18_bench(b: &mut test::Bencher) {
+//     let SEARCH = pow2(2);
+//     let LENGTH = pow2(9);
+//     let SIZE = pow2(18);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }
 
-// ---------------------- TOP 16 --------------------------
+// // ---------------------- TOP 16 --------------------------
 
-#[bench]
-fn ball_tree_search_4_from_10_bench(b: &mut test::Bencher) {
-    let SEARCH = pow2(4);
-    let LENGTH = pow2(9);
-    let SIZE = pow2(10);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_4_from_10_bench(b: &mut test::Bencher) {
+//     let SEARCH = pow2(4);
+//     let LENGTH = pow2(9);
+//     let SIZE = pow2(10);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }
 
-#[bench]
-fn ball_tree_search_4_from_14_bench(b: &mut test::Bencher) {
-    let SEARCH = pow2(4);
-    let LENGTH = pow2(9);
-    let SIZE = pow2(14);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_4_from_14_bench(b: &mut test::Bencher) {
+//     let SEARCH = pow2(4);
+//     let LENGTH = pow2(9);
+//     let SIZE = pow2(14);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }
 
-#[bench]
-fn ball_tree_search_4_from_18_bench(b: &mut test::Bencher) {
-    let SEARCH = pow2(4);
-    let LENGTH = pow2(9);
-    let SIZE = pow2(18);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_4_from_18_bench(b: &mut test::Bencher) {
+//     let SEARCH = pow2(4);
+//     let LENGTH = pow2(9);
+//     let SIZE = pow2(18);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }

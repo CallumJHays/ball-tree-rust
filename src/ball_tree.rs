@@ -165,7 +165,7 @@ impl<T: Baller + Clone> BallTree<T> {
         let midpoint = self_key.midpoint(&self_rad, &other_key, &other_rad);
         Ball(
             midpoint.clone(),
-            self_key.metric(&midpoint),
+            self_key.metric(&midpoint) + self_rad,
             Box::new(self),
             Box::new(other))
     }
