@@ -91,6 +91,7 @@ let bt_updated = bt.push(&CustomType {
     vector: vec![0., 0., 0., 0., 0.,]
 });
 ```
+
 ## Testing
 For sanity check tests run `cargo test`.
 
