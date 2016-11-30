@@ -37,10 +37,6 @@ impl<T: Baller + Clone> BallTree<T> {
        BallTree::_load_push(collection.clone())
     }
 
-    fn _load_push(collection: Vec<T>) -> BallTree<T> {
-        collection.iter().fold(BallTree::new(), |bt, item| bt.push(item))
-    }
-
     pub fn flatten(&self) -> Vec<T> {
         self._flatten_node()
     }
@@ -68,6 +64,10 @@ impl<T: Baller + Clone> BallTree<T> {
             .unwrap_or(Ordering::Equal)
         });
         list
+    }
+
+    fn _load_push(collection: Vec<T>) -> BallTree<T> {
+        collection.iter().fold(BallTree::new(), |bt, item| bt.push(item))
     }
 
     fn _flatten_node(&self) -> Vec<T> {

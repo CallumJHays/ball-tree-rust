@@ -1,7 +1,7 @@
-// #![feature(test)]
+#![feature(test)]
 
 pub mod ball_tree;
 pub mod vector_math;
 
-// #[cfg(test)]
-// mod tests;
+#[cfg(test)]
+mod tests;

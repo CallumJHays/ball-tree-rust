@@ -352,13 +352,13 @@ Free memory required to run an AxB benchmark is (roughly):
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone())
 // }
-// #[bench]
-// fn clone_tree_20x9_bench(b: &mut test::Bencher) {
-//     let SIZE = pow2(20);
-//     let LENGTH = pow2(9);
-//     let bt = random_benchmark_tree(SIZE, LENGTH);
-//     b.iter(|| bt.clone())
-// }
+#[bench]
+fn clone_tree_20x9_bench(b: &mut test::Bencher) {
+    let SIZE = pow2(20);
+    let LENGTH = pow2(9);
+    let bt = random_benchmark_tree(SIZE, LENGTH);
+    b.iter(|| bt.clone())
+}
 
 // //--------------------- 1024 length vectors ---------------------
 // #[bench]
@@ -451,13 +451,13 @@ Free memory required to run an AxB benchmark is (roughly):
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
 
-// #[bench]
-// fn ball_tree_push_20x9_bench(b: &mut test::Bencher) {
-//     let SIZE = pow2(20);
-//     let LENGTH = pow2(9);
-//     let bt = random_benchmark_tree(SIZE, LENGTH);
-//     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
-// }
+#[bench]
+fn ball_tree_push_20x9_bench(b: &mut test::Bencher) {
+    let SIZE = pow2(20);
+    let LENGTH = pow2(9);
+    let bt = random_benchmark_tree(SIZE, LENGTH);
+    b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
+}
 
 // //----------------- 1024 length vector benchmarks --------------
 
@@ -498,14 +498,14 @@ Free memory required to run an AxB benchmark is (roughly):
 
 // ---------------------- TOP 1 --------------------------
 
-#[bench]
-fn ball_tree_search_0_from_10_bench(b: &mut test::Bencher) {
-    let SIZE = pow2(10);
-    let LENGTH = pow2(9);
-    let SEARCH = pow2(0);
-    let bt = random_benchmark_tree(SIZE, LENGTH);
-    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-}
+// #[bench]
+// fn ball_tree_search_0_from_10_bench(b: &mut test::Bencher) {
+//     let SIZE = pow2(10);
+//     let LENGTH = pow2(9);
+//     let SEARCH = pow2(0);
+//     let bt = random_benchmark_tree(SIZE, LENGTH);
+//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+// }
 
 // #[bench]
 // fn ball_tree_search_0_from_14_bench(b: &mut test::Bencher) {

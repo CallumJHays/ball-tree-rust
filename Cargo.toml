@@ -3,5 +3,5 @@ name = "ball_tree"
 version = "0.2.0"
 authors = ["callumjhays <callumjhays@gmail.com>"]
 
-[dev-dependencies.rand]
+[dependencies.rand]
 version = "0.3"
