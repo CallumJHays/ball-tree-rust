@@ -37,6 +37,10 @@ impl<T: Baller + Clone> BallTree<T> {
        BallTree::_load_push(collection)
     }
 
+    fn _load_push(collection: Vec<T>) -> BallTree<T> {
+        collection.iter().fold(BallTree::new(), |bt, item| bt.push(item))
+    }
+
     pub fn flatten(&self) -> Vec<T> {
         self._flatten_node()
     }
@@ -104,6 +108,7 @@ impl<T: Baller + Clone> BallTree<T> {
         list
     }
 
+<<<<<<< HEAD
     fn _load_push(collection: Vec<T>) -> Self {
         let mut bt = BallTree::new();
         for item in collection.into_iter() {
@@ -112,6 +117,8 @@ impl<T: Baller + Clone> BallTree<T> {
         bt
     }
 
+=======
+>>>>>>> parent of 98a76ef... made some changes
     fn _flatten_node(&self) -> Vec<T> {
         match *self {
             Nil => Vec::new(),
