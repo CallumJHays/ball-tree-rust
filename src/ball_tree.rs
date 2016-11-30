@@ -64,9 +64,7 @@ impl<T: Baller + Clone> BallTree<T> {
         let mut list = self._nn_search_node(&features, &max_entries);
         list.sort_by(|a, b| {
             a.metric(&features)
-            .partial_cmp(
-                &b.metric(&features)
-            )
+            .partial_cmp(&b.metric(&features))
             .unwrap_or(Ordering::Equal)
         });
         list

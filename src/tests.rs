@@ -390,8 +390,8 @@ Free memory required to run an AxB benchmark is (roughly):
 //     b.iter(|| bt.clone())
 // }
 
-// // //################## PUSH BENCHMARKS ##########################
-// // //----------------- 256 length vector benchmarks --------------
+// //################## PUSH BENCHMARKS ##########################
+// //----------------- 256 length vector benchmarks --------------
 
 // #[bench]
 // fn ball_tree_push_10x8_bench(b: &mut test::Bencher) {
@@ -403,24 +403,24 @@ Free memory required to run an AxB benchmark is (roughly):
 
 // #[bench]
 // fn ball_tree_push_14x8_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(14);
-//     let SIZE = pow2(8);
+//     let SIZE = pow2(14);
+//     let LENGTH = pow2(8);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
 
 // #[bench]
 // fn ball_tree_push_18x8_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(18);
-//     let SIZE = pow2(8);
+//     let SIZE = pow2(18);
+//     let LENGTH = pow2(8);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
 
 // #[bench]
 // fn ball_tree_push_20x8_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(20);
-//     let SIZE = pow2(8);
+//     let SIZE = pow2(20);
+//     let LENGTH = pow2(8);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
@@ -429,32 +429,32 @@ Free memory required to run an AxB benchmark is (roughly):
 
 // #[bench]
 // fn ball_tree_push_10x9_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(10);
-//     let SIZE = pow2(9);
+//     let SIZE = pow2(10);
+//     let LENGTH = pow2(9);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
 
 // #[bench]
 // fn ball_tree_push_14x9_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(14);
-//     let SIZE = pow2(9);
+//     let SIZE = pow2(14);
+//     let LENGTH = pow2(9);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
 
 // #[bench]
 // fn ball_tree_push_18x9_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(18);
-//     let SIZE = pow2(9);
+//     let SIZE = pow2(18);
+//     let LENGTH = pow2(9);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
 
 // #[bench]
 // fn ball_tree_push_20x9_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(20);
-//     let SIZE = pow2(9);
+//     let SIZE = pow2(20);
+//     let LENGTH = pow2(9);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
@@ -463,24 +463,24 @@ Free memory required to run an AxB benchmark is (roughly):
 
 // #[bench]
 // fn ball_tree_push_10x10_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(10);
 //     let SIZE = pow2(10);
+//     let LENGTH = pow2(10);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
 
 // #[bench]
 // fn ball_tree_push_14x10_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(14);
-//     let SIZE = pow2(10);
+//     let SIZE = pow2(14);
+//     let LENGTH = pow2(10);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
 
 // #[bench]
 // fn ball_tree_push_18x10_bench(b: &mut test::Bencher) {
-//     let LENGTH = pow2(18);
-//     let SIZE = pow2(10);
+//     let SIZE = pow2(18);
+//     let LENGTH = pow2(10);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
@@ -493,34 +493,34 @@ Free memory required to run an AxB benchmark is (roughly):
 //     b.iter(|| bt.clone().push(&gen_random_vector(LENGTH)))
 // }
 
-// // ################# SEARCH BENCHMARKS ######################
-// // ############## USING 512 LENGTH VECTORS ##################
+// ################# SEARCH BENCHMARKS ######################
+// ############## USING 512 LENGTH VECTORS ##################
 
-// // ---------------------- TOP 1 --------------------------
+// ---------------------- TOP 1 --------------------------
 
-// #[bench]
-// fn ball_tree_search_0_from_10_bench(b: &mut test::Bencher) {
-//     let SEARCH = pow2(0);
-//     let LENGTH = pow2(9);
-//     let SIZE = pow2(10);
-//     let bt = random_benchmark_tree(SIZE, LENGTH);
-//     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
-// }
+#[bench]
+fn ball_tree_search_0_from_10_bench(b: &mut test::Bencher) {
+    let SIZE = pow2(10);
+    let LENGTH = pow2(9);
+    let SEARCH = pow2(0);
+    let bt = random_benchmark_tree(SIZE, LENGTH);
+    b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
+}
 
 // #[bench]
 // fn ball_tree_search_0_from_14_bench(b: &mut test::Bencher) {
-//     let SEARCH = pow2(0);
-//     let LENGTH = pow2(9);
 //     let SIZE = pow2(14);
+//     let LENGTH = pow2(9);
+//     let SEARCH = pow2(0);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
 // }
 
 // #[bench]
 // fn ball_tree_search_0_from_18_bench(b: &mut test::Bencher) {
-//     let SEARCH = pow2(0);
-//     let LENGTH = pow2(9);
 //     let SIZE = pow2(18);
+//     let LENGTH = pow2(9);
+//     let SEARCH = pow2(0);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
 // }
@@ -529,27 +529,27 @@ Free memory required to run an AxB benchmark is (roughly):
 
 // #[bench]
 // fn ball_tree_search_2_from_10_bench(b: &mut test::Bencher) {
-//     let SEARCH = pow2(2);
-//     let LENGTH = pow2(9);
 //     let SIZE = pow2(10);
+//     let LENGTH = pow2(9);
+//     let SEARCH = pow2(2);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
 // }
 
 // #[bench]
 // fn ball_tree_search_2_from_14_bench(b: &mut test::Bencher) {
-//     let SEARCH = pow2(2);
-//     let LENGTH = pow2(9);
 //     let SIZE = pow2(14);
+//     let LENGTH = pow2(9);
+//     let SEARCH = pow2(2);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
 // }
 
 // #[bench]
 // fn ball_tree_search_2_from_18_bench(b: &mut test::Bencher) {
-//     let SEARCH = pow2(2);
-//     let LENGTH = pow2(9);
 //     let SIZE = pow2(18);
+//     let LENGTH = pow2(9);
+//     let SEARCH = pow2(2);
 //     let bt = random_benchmark_tree(SIZE, LENGTH);
 //     b.iter(|| bt.clone().nn_search(&gen_random_vector(LENGTH), &SEARCH))
 // }
