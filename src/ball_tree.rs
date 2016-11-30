@@ -31,9 +31,9 @@ pub enum BallTree<T: Baller + Clone> {
 }
 
 impl<T: Baller + Clone> BallTree<T> {
-    pub fn new() -> BallTree<T> { Nil }
+    pub fn new() -> Self { Nil }
 
-    pub fn load(collection: Vec<T>) -> BallTree<T> {
+    pub fn load(collection: Vec<T>) -> Self {
        BallTree::_load_push(collection)
     }
 
@@ -41,19 +41,57 @@ impl<T: Baller + Clone> BallTree<T> {
         self._flatten_node()
     }
 
-    pub fn push(self, item: &T) -> BallTree<T> {
-        let is_not_nil = match &self {
-            &Nil => false,
-            _ => true
-        };
-        if is_not_nil {
-            let (key, rad) = self._get_key_and_radius();
-            let dist = key.metric(&item);
-            if dist > rad {
-                return self._bounding_ball(Point(item.clone()))
+    pub fn push(&mut self, item: &T) {
+        let new_node = Point(item.clone());
+
+        match *self {
+            Nil => {},
+            _ => {
+                let (key, rad) = self._get_key_and_radius();
+                let dist = key.metric(&item);
+                if dist > rad {
+                    return self._bounding_ball(new_node);
+                }
             }
         }
-        self._push_node(Point(item.clone()), |tree| tree)
+        
+        let mut current_self = self;
+        loop {
+            match *current_self {
+                Nil => {
+                    *current_self = new_node;
+                    break;
+                },
+                Ball(ref self_key, ref self_rad, ref left, ref right) => match new_node {
+                    Nil => {},
+                    Point(_) => {
+                        let (left_key, left_rad) = left._get_key_and_radius();
+                        let (right_key, right_rad) = right._get_key_and_radius();
+                        let left_dist = item.metric(&left_key);
+                        let right_dist = item.metric(&right_key);
+
+                        // if inside either ball, choose which ball to insert the item into
+                        if left_dist <= left_rad || right_dist <= right_rad {
+                            current_self = if left_dist < right_dist { &mut left } else { &mut right };
+                        } else {
+                            // item is in neither left nor right, wrap in new ball with the closest child
+                            if left_dist <= left_rad {
+                                left._bounding_ball(new_node);
+                            } else {
+                                right._bounding_ball(new_node);
+                            }
+                            // we have the answer. we can return now.
+                            break;
+                        }
+                    },
+                    Ball(_, _, _, _) => panic!("Adding entire balls to ball tree is not supported!")
+                },
+                Point(self_key) => {
+                    current_self._bounding_ball(new_node);
+                    break;
+                }
+            }
+        }
     }
 
     pub fn nn_search(&self, item: &T, max_entries: &usize) -> Vec<T> {
@@ -66,8 +104,12 @@ impl<T: Baller + Clone> BallTree<T> {
         list
     }
 
-    fn _load_push(collection: Vec<T>) -> BallTree<T> {
-        collection.iter().fold(BallTree::new(), |bt, item| bt.push(item))
+    fn _load_push(collection: Vec<T>) -> Self {
+        let mut bt = BallTree::new();
+        for item in collection.into_iter() {
+            bt.push(&item);
+        }
+        bt
     }
 
     fn _flatten_node(&self) -> Vec<T> {
@@ -120,56 +162,14 @@ impl<T: Baller + Clone> BallTree<T> {
         }
     }
 
-    fn _push_node<F>(self, node: BallTree<T>, ancestors: F) -> BallTree<T>
-                                            where F: Fn(BallTree<T>) -> BallTree<T> {
-        match self {
-            Nil => node.clone(),
-            Ball(self_key, self_rad, left, right) => match node {
-                Nil => Nil,
-                Point(ref node_key) => {
-                    let (go_left, to_bound) = {
-                        let (left_key, left_rad) = left._get_key_and_radius();
-                        let (right_key, right_rad) = right._get_key_and_radius();
-                        let left_dist = node_key.metric(&left_key);
-                        let right_dist = node_key.metric(&right_key);
-
-                        // if inside either ball, choose which ball to insert the node into
-                        if left_dist <= left_rad || right_dist <= right_rad {
-                            if left_dist <= left_rad { (true, false) } else { (false, false) }
-                        } else {
-                            // node is in neither left nor right, wrap in new ball with the closest child
-                            if left_dist < right_dist { (true, true) } else { (false, true) }
-                        }
-                    };
-
-                    if to_bound {
-                        if go_left {
-                            ancestors(left._bounding_ball(node.clone()))
-                        } else {
-                            ancestors(right._bounding_ball(node.clone()))
-                        }
-                    } else {
-                        if go_left {
-                            left._push_node(node.clone(), move |new_left| ancestors(Ball(self_key.clone(), self_rad.clone(), Box::new(new_left), right.clone())))
-                        } else {
-                            right._push_node(node.clone(), move |new_right| ancestors(Ball(self_key.clone(), self_rad.clone(), left.clone(), Box::new(new_right))))
-                        }
-                    }
-                },
-                Ball(_, _, _, _) => panic!("Adding entire balls to ball tree is not supported!")
-            },
-            Point(self_key) => Point(self_key)._bounding_ball(node.clone())
-        }
-    }
-
-    pub fn _bounding_ball(self, other: BallTree<T>) -> BallTree<T> {
+    pub fn _bounding_ball(&mut self, other: Self) {
         let (self_key, self_rad) = self._get_key_and_radius();
         let (other_key, other_rad) = other._get_key_and_radius();
         let midpoint = self_key.midpoint(&self_rad, &other_key, &other_rad);
-        Ball(
+        *self = Ball(
             midpoint.clone(),
             self_key.metric(&midpoint) + self_rad,
-            Box::new(self),
+            Box::new(*self),
             Box::new(other))
     }
 
