@@ -67,7 +67,14 @@ impl<T: Baller + Clone> BallTree<T> {
     }
 
     fn _load_push(collection: Vec<T>) -> BallTree<T> {
-        collection.iter().fold(BallTree::new(), |bt, item| bt.push(item))
+        let mut counter: usize = 1;
+        collection.iter().fold(BallTree::new(), |bt, item| {
+            if counter % 100 == 0 {
+                println!("pushing vector {}", counter);
+            }
+            counter += 1;
+            bt.push(item)
+        })
     }
 
     fn _flatten_node(&self) -> Vec<T> {
