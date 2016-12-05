@@ -1,7 +1,8 @@
+extern crate rayon;
+
 use std::marker::PhantomData;
-use std::fmt::Debug;
 use std::mem;
-use std::thread;
+use std::cmp::Ordering;
 
 pub trait HasMeasurableDiff {
     fn difference(&self, other: &Self) -> f32;
@@ -10,7 +11,7 @@ pub trait HasMeasurableDiff {
 }
 
 #[derive(Debug, PartialEq)]
-pub enum Ball<K, V> where K: HasMeasurableDiff  {
+pub enum Ball<K, V> where K: HasMeasurableDiff + Sync, V: Sync  {
     Stub,
     Leaf { key: K, val: V},
     Branch {
@@ -21,14 +22,14 @@ pub enum Ball<K, V> where K: HasMeasurableDiff  {
     }
 }
 
-pub struct BallTree<K, V> where K: HasMeasurableDiff  {
+pub struct BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
     root: Option<Box<Ball<K, V>>>,
     size: u32,
     _key_type: PhantomData<K>,
     _val_type: PhantomData<V>,
 }
 
-impl<K, V> Ball<K, V> where K: HasMeasurableDiff {
+impl<K, V> Ball<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
     pub fn new(key: K, val: V) -> Self {
         Ball::Leaf { key: key, val: val }
     }
@@ -48,9 +49,47 @@ impl<K, V> Ball<K, V> where K: HasMeasurableDiff {
             Ball::Stub => panic!()
         }
     }
+
+    fn nn_search_node(&self, search_key: &K, limit: &u32) -> Vec<&Self> {
+        // traverse the tree iteratively until one child is not large enough
+        // to satisfy limit, or until limit is fulfilled
+        let mut cur_node: *const Ball<K, V> = self as *const Ball<K, V>;
+        let mut go_left;
+        loop {
+            match unsafe { &*cur_node } {
+                ref leaf @ &Ball::Leaf { .. } => return vec![leaf],
+                &Ball::Branch { ref left, ref right, .. } => {
+                    // choose the best child to search
+                    go_left = {
+                        let (left_key, _) = left.get_key_and_radius();
+                        let (right_key, _) = right.get_key_and_radius();
+                        let left_diff = left_key.difference(&search_key);
+                        let right_diff = right_key.difference(&search_key);
+
+                        left_diff <= right_diff
+                    };
+
+                    let (closest, furthest) = if go_left { (left, right) } else { (right, left) };
+                    
+                    if closest.size() < *limit {
+                        // parrallellize the remaining search among both children
+                        let (mut r1, mut r2) = rayon::join(
+                            || closest.nn_search_node(&search_key, &closest.size()),
+                            || furthest.nn_search_node(&search_key, &(limit - closest.size()))
+                        );
+                        r1.append(&mut r2);
+                        return r1;
+                    } else {
+                        cur_node = &**closest as *const Ball<K, V>;
+                    }
+                },
+                &Ball::Stub => panic!()
+            }
+        }
+    }
 }
 
-impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Debug, V: Debug {
+impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
     pub fn new() -> Self {
         BallTree {
             root: None,
@@ -63,66 +102,22 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Debug, V: Debug {
     pub fn nn_search(&self, search_key: &K, limit: &u32) -> Vec<&Ball<K, V>> {
         let root_node = match self.root {
             None => return vec![],
-            Some(ref root_node) => root_node
+            Some(ref root_node) => &**root_node
         };
 
         // return search results ordered by difference
-        root_node._nn_search_node(&search_key, &limit)
-        .sort_by(|node, _| {
-            let (node_key, _) = node.get_key_and_radius();
-            node_key.difference(&search_key)
-        })
-    }
-
-    fn _nn_search_node(&self, search_key: &K, limit: &u32) -> Vec<&Ball<K, V>> {
-        // traverse the tree iteratively until one child is not large enough
-        // to satisfy limit, or until limit is fulfilled
-        let mut cur_node: *const Box<Ball<K, V>> = &self;
-        let mut go_left;
-        loop {
-            match unsafe { &**cur_node } {
-                leaf @ Ball::Leaf { .. } => return vec![leaf],
-                Ball::Branch { ref left, ref right, .. } => {
-                    // choose the best child to search
-                    go_left = {
-                        let (left_key, left_rad) = left.get_key_and_radius();
-                        let (right_key, right_rad) = right.get_key_and_radius();
-                        let left_diff = left_key.difference(&search_key);
-                        let right_diff = right_key.difference(&search_key);
-
-                        if left_diff <= left_rad || right_diff <= right_rad {
-                            left_diff <= right_diff
-                        } else {
-                            left_diff <= left_rad
-                        }
-                    };
-
-                    let closest_child = if go_left { left } else { right };
-
-                    if closest.size() < limit {
-                        break; // break out of the loop and start parrallellizing the search
-                    } else {
-                        cur_node = &closest;
-                    }
-                },
-                Ball::Stub => panic!()
-            }
-        }
-
-        let (closest, furthest) = if go_left { (left, right) } else { (right, left) };
-
-        // spawn a thread to search the closest
-        let closestResultsThread = thread::spawn(move || {
-            closest._nn_search_node(&search_key, &closest.size())
+        let mut results = root_node.nn_search_node(&search_key, &limit);
+        results.sort_by(|n1, n2| {
+            let (n1_key, _) = n1.get_key_and_radius();
+            let n1_diff = n1_key.difference(&search_key);
+            let (n2_key, _) = n2.get_key_and_radius();
+            let n2_diff = n2_key.difference(&search_key);
+            n1_diff.partial_cmp(&n2_diff).unwrap_or(Ordering::Equal)
         });
-        // search the furthest ourself
-        let furthestResults = furthest._nn_search_node(&search_key, &(limit - closest.size()));
-        // join and return the results
-        closestResultsThread.join() ++ furthestResults
+        results
     }
 
-    pub fn push(&mut self, mut node: Ball<K, V>) {
-        let node_ptr: *mut Ball<K, V> = &mut node;
+    pub fn push(&mut self, node: Ball<K, V>) {
         self.size += 1;
 
         // if root is none, make new node the new root
@@ -147,15 +142,16 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Debug, V: Debug {
         // search iteratively until bounded with the closest ball
         let mut cur_child: *mut Box<Ball<K, V>> = &mut root_node;
         loop {
-            if let &mut Ball::Branch { ref mut left, ref mut right, .. } = unsafe { &mut **cur_child } {
-                let (go_left, to_bound) = {
+            if let &mut Ball::Branch { ref mut size, ref mut left, ref mut right, .. } = unsafe { &mut **cur_child } {
+                *size += 1;
+                let (go_left, outside_both) = {
                     let (left_key, left_rad) = left.get_key_and_radius();
                     let (right_key, right_rad) = right.get_key_and_radius();
                     let (node_key, _) = node.get_key_and_radius();
                     let left_diff = left_key.difference(&node_key);
                     let right_diff = right_key.difference(&node_key);
 
-                    // to_bound if not in either ball
+                    // outside_both if not in either ball
                     let outside_both = left_diff > left_rad && right_diff > right_rad;
                     let go_left = left_diff <= if outside_both { right_diff } else { left_rad };
                     (go_left, outside_both)
@@ -175,7 +171,7 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Debug, V: Debug {
 }
 
 fn bounding_ball<K, V>(b1: Ball<K, V>, b2: Ball<K, V>) -> Ball<K, V>
-        where K: HasMeasurableDiff + Debug {
+        where K: HasMeasurableDiff + Sync, V: Sync {
 
     let (midpoint, radius) = {
         let (b1_key, b1_rad) = b1.get_key_and_radius();
@@ -214,6 +210,28 @@ mod tests {
         .collect()
     }
 
+    fn simple_sample_features() -> [Feature; 7] {
+        [
+            vec![15., -7.],
+            vec![-20., -20.],
+            vec![9., 10.],
+            vec![6., 6.],
+            vec![-2., 10.],
+            vec![18., 5.],
+            vec![1., 1.],
+        ]
+    }
+
+    fn simple_sample_tree() -> BallTree<Feature, i32> {
+        let mut bt = BallTree::new();
+        let mut i = 1;
+        for feature in simple_sample_features().into_iter() {
+            bt.push(Ball::new(feature.clone(), i));
+            i += 1;
+        }
+        bt
+    }
+
     impl HasMeasurableDiff for Feature {
         fn difference(&self, other: &Self) -> f32 {
             (0..self.len())
@@ -235,14 +253,34 @@ mod tests {
     }
 
     #[test]
-    fn midpoint() {
+    fn midpoint_impl() {
         let test = vec![50., 10., 10.].midpoint(&vec![-50., 10., 10.], &25., &25.);
         assert_eq!(test, vec![0., 10., 10.]);
     }
 
     #[test]
-    fn basics() {
-        let mut bt: BallTree<Feature, u32> = BallTree::new();
+    fn nn_search() {
+        // searching an empty tree gets an empty vec
+        let bt: BallTree<Feature, i32> = BallTree::new();
+        let search_feature = vec![10., 10.];
+        assert_eq!(bt.nn_search(&search_feature, &1), vec![] as Vec<&Ball<Feature, i32>>);
+
+        // searching a tree gets the desired results
+        let expected_res = vec![
+            Ball::new(vec![9., 10.], 3),
+            Ball::new(vec![6., 6.], 4),
+            Ball::new(vec![18., 5.], 6),
+            Ball::new(vec![-2., 10.], 5),
+            Ball::new(vec![1., 1.], 7),
+        ];
+        let expected_res_ref: Vec<&Ball<Feature, i32>> = expected_res.iter().collect();
+        let bt = simple_sample_tree();
+        assert_eq!(bt.nn_search(&search_feature, &5), expected_res_ref);
+    }
+
+    #[test]
+    fn push() {
+        let mut bt = BallTree::new();
         assert_eq!(bt.root, None);
         assert_eq!(bt.size, 0);
 
@@ -254,7 +292,7 @@ mod tests {
         bt.push(node);
         assert_eq!(bt.size, 2);
 
-        let node = Ball::new(rand_feature(513), 3);
+        let node = Ball::new(rand_feature(512), 3);
         bt.push(node);
         assert_eq!(bt.size, 3);
 
