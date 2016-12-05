@@ -1,6 +1,7 @@
 use std::marker::PhantomData;
 use std::fmt::Debug;
 use std::mem;
+use std::thread;
 
 pub trait HasMeasurableDiff {
     fn difference(&self, other: &Self) -> f32;
@@ -59,45 +60,65 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Debug, V: Debug {
         }
     }
 
-    pub fn nn_search(&self, searchKey: &K, limit: &u32) -> Vec<&Ball<K, V>> {
+    pub fn nn_search(&self, search_key: &K, limit: &u32) -> Vec<&Ball<K, V>> {
         let root_node = match self.root {
             None => return vec![],
             Some(ref root_node) => root_node
         };
-        
+
+        // return search results ordered by difference
+        root_node._nn_search_node(&search_key, &limit)
+        .sort_by(|node, _| {
+            let (node_key, _) = node.get_key_and_radius();
+            node_key.difference(&search_key)
+        })
+    }
+
+    fn _nn_search_node(&self, search_key: &K, limit: &u32) -> Vec<&Ball<K, V>> {
         // traverse the tree iteratively until one child is not large enough
         // to satisfy limit, or until limit is fulfilled
-        let mut cur_node: *mut Box<Ball<K, V>> = &mut root_node;
+        let mut cur_node: *const Box<Ball<K, V>> = &self;
+        let mut go_left;
         loop {
-            match unsafe { &mut **cur_node } {
-                leaf @ Ball::Leaf { .. } => leaf,
+            match unsafe { &**cur_node } {
+                leaf @ Ball::Leaf { .. } => return vec![leaf],
                 Ball::Branch { ref left, ref right, .. } => {
-                    // choose the best child
-                    let (left_key, left_rad) = left.get_key_and_radius();
-                    let (right_key, right_rad) = right.get_key_and_radius();
-                    let left_diff = left_key.difference(&searchKey);
-                    let right_diff = right_key.difference(&searchKey);
+                    // choose the best child to search
+                    go_left = {
+                        let (left_key, left_rad) = left.get_key_and_radius();
+                        let (right_key, right_rad) = right.get_key_and_radius();
+                        let left_diff = left_key.difference(&search_key);
+                        let right_diff = right_key.difference(&search_key);
 
-                    let to_bound = left_diff > left_rad && right_diff > right_rad;
-                    let go_left = if to_bound {
-                        left_diff <= right_diff
-                    } else {
-                        left_diff <= left_rad
+                        if left_diff <= left_rad || right_diff <= right_rad {
+                            left_diff <= right_diff
+                        } else {
+                            left_diff <= left_rad
+                        }
                     };
-                    (go_left, to_bound)
 
-                    // if the child's size < limit, spin up two threads and search both
+                    let closest_child = if go_left { left } else { right };
+
+                    if closest.size() < limit {
+                        break; // break out of the loop and start parrallellizing the search
+                    } else {
+                        cur_node = &closest;
+                    }
                 },
                 Ball::Stub => panic!()
             }
         }
 
-        // if limit has not been satisfied, 
-        vec![]
-    }
+        let (closest, furthest) = if go_left { (left, right) } else { (right, left) };
 
-    fn _nn_search_node(&self, key: &K, limit: &u32) -> Vec<&Ball<K, V>> {
-
+        // spawn a thread to search the closest
+        let closestResultsThread = thread::spawn(move || {
+            closest._nn_search_node(&search_key, &closest.size())
+        });
+        // search the furthest ourself
+        let furthestResults = furthest._nn_search_node(&search_key, &(limit - closest.size()));
+        // join and return the results
+        closestResultsThread.join() ++ furthestResults
     }
 
     pub fn push(&mut self, mut node: Ball<K, V>) {
@@ -135,16 +156,12 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Debug, V: Debug {
                     let right_diff = right_key.difference(&node_key);
 
                     // to_bound if not in either ball
-                    let to_bound = left_diff > left_rad && right_diff > right_rad;
-                    let go_left = if to_bound {
-                        left_diff <= right_diff
-                    } else {
-                        left_diff <= left_rad
-                    };
-                    (go_left, to_bound)
+                    let outside_both = left_diff > left_rad && right_diff > right_rad;
+                    let go_left = left_diff <= if outside_both { right_diff } else { left_rad };
+                    (go_left, outside_both)
                 };
 
-                if to_bound {
+                if outside_both {
                     let closest_child = if go_left { left } else { right };
                     let old_child = mem::replace(closest_child, Box::new(Ball::Stub));
                     mem::replace(closest_child, Box::new(bounding_ball(*old_child, node)));
@@ -167,7 +184,7 @@ fn bounding_ball<K, V>(b1: Ball<K, V>, b2: Ball<K, V>) -> Ball<K, V>
         let midpoint = b1_key.midpoint(&b2_key, &b1_rad, &b2_rad);
         let radius = b1_key.difference(&midpoint) + b1_rad;
 
-        if radius.is_nan() { panic!("radius was NaN! Please thoroughly test your midpoint function.")}
+        if radius.is_nan() { panic!("radius was NaN! Please thoroughly test your midpoint function.") }
 
         (midpoint, radius)
     };
@@ -237,7 +254,7 @@ mod tests {
         bt.push(node);
         assert_eq!(bt.size, 2);
 
-        let node = Ball::new(rand_feature(512), 3);
+        let node = Ball::new(rand_feature(513), 3);
         bt.push(node);
         assert_eq!(bt.size, 3);
 
