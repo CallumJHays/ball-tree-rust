@@ -24,6 +24,7 @@ fn simple_sample_tree() -> BallTree<Feature, i32> {
         bt.push(Ball::new(feature.clone(), i));
         i += 1;
     }
+
     bt
 }
 
