@@ -1,10 +1,11 @@
 [package]
 name = "ball_tree"
-version = "0.2.0"
+version = "0.3.0"
 authors = ["callumjhays <callumjhays@gmail.com>"]
 
-[dependencies.rayon]
-version = "0.5.0"
+[dependencies]
+rayon = "0.5.0"
 
-[dev-dependencies.rand]
-version = "0.3"
+[dev-dependencies]
+rand = "0.3"
+byteorder = " 0.5"

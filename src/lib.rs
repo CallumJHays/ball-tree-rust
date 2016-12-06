@@ -11,8 +11,11 @@ use std::cmp::Ordering;
 
 pub trait HasMeasurableDiff {
     fn difference(&self, other: &Self) -> f32;
-
     fn midpoint(&self, other: &Self, self_rad: &f32, other_rad: &f32) -> Self;
+}
+
+pub trait IsKdConstructable<V: Sync> where Self: Sync + Sized + HasMeasurableDiff {
+    fn construct(collection: Vec<(Self, V)>) -> BallTree<Self, V>;
 }
 
 #[derive(Debug, PartialEq)]
@@ -37,6 +40,14 @@ pub struct BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
 impl<K, V> Ball<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
     pub fn new(key: K, val: V) -> Self {
         Ball::Leaf { key: key, val: val }
+    }
+
+    pub fn key(&self) -> &K {
+        match *self {
+            Ball::Leaf { ref key, .. } => key,
+            Ball::Branch { ref key, .. } => key,
+            Ball::Stub => panic!()
+        }
     }
 
     fn get_key_and_radius(&self) -> (&K, f32) {
@@ -65,14 +76,7 @@ impl<K, V> Ball<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
                 ref leaf @ &Ball::Leaf { .. } => return vec![leaf],
                 &Ball::Branch { ref left, ref right, .. } => {
                     // choose the best child to search
-                    go_left = {
-                        let (left_key, _) = left.get_key_and_radius();
-                        let (right_key, _) = right.get_key_and_radius();
-                        let left_diff = left_key.difference(&search_key);
-                        let right_diff = right_key.difference(&search_key);
-
-                        left_diff <= right_diff
-                    };
+                    go_left = left.key().difference(&search_key) <= right.key().difference(&search_key);
 
                     let (closest, furthest) = if go_left { (left, right) } else { (right, left) };
                     
@@ -115,10 +119,8 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
         // return search results ordered by difference
         let mut results = root_node.nn_search_node(&search_key, &limit);
         results.sort_by(|n1, n2| {
-            let (n1_key, _) = n1.get_key_and_radius();
-            let n1_diff = n1_key.difference(&search_key);
-            let (n2_key, _) = n2.get_key_and_radius();
-            let n2_diff = n2_key.difference(&search_key);
+            let n1_diff = n1.key().difference(&search_key);
+            let n2_diff = n2.key().difference(&search_key);
             n1_diff.partial_cmp(&n2_diff).unwrap_or(Ordering::Equal)
         });
         results
@@ -154,7 +156,7 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
                 let (go_left, outside_both) = {
                     let (left_key, left_rad) = left.get_key_and_radius();
                     let (right_key, right_rad) = right.get_key_and_radius();
-                    let (node_key, _) = node.get_key_and_radius();
+                    let node_key = node.key();
                     let left_diff = left_key.difference(&node_key);
                     let right_diff = right_key.difference(&node_key);
 
@@ -172,7 +174,7 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
                 } else {
                     cur_child = if go_left { left } else { right };
                 }
-            }
+            } else { panic!() }
         }
     }
 }

@@ -37,14 +37,22 @@ impl HasMeasurableDiff for Feature {
     }
 
     fn midpoint(&self, other: &Self, self_rad: &f32, other_rad: &f32) -> Self {
-        let span: Feature = (0..self.len()).map(|i| self[i] - other[i]).collect(); // span = self - other
-        let mag = span.iter().fold(0., |sum, x| sum + x.powi(2)).sqrt(); // mag = sqrt(sum(x^2))
-        let unit_vec: Feature = span.into_iter().map(|x| x / mag).collect(); // unit_vec = 1 unit in dir (self - other)
-        let self_off: Feature = unit_vec.iter().map(|x| x * self_rad).collect(); // self_off = unit_vec * self_rad
-        let other_off: Feature = unit_vec.into_iter().map(|x| -x * other_rad).collect(); // other_off = unit_vec * other_rad
-        let self_p: Feature = (0..self.len()).map(|i| self[i] + self_off[i]).collect(); // self_p = self + self_off
-        let other_p: Feature = (0..self.len()).map(|i| other[i] + other_off[i]).collect(); // other_p = other + other_off
-        (0..self.len()).map(|i| (self_p[i] + other_p[i]) / 2.).collect() // midpoint = (self_p + other_p) / 2
+        // span = self - other
+        let span: Feature = (0..self.len()).map(|i| self[i] - other[i]).collect();
+        // mag = sqrt(sum(x^2))
+        let mag = span.iter().fold(0., |sum, x| sum + x.powi(2)).sqrt();
+        // unit_vec = 1 unit from other to self
+        let unit_vec: Feature = span.into_iter().map(|x| x / mag).collect();
+        // self_off = unit_vec * self_rad
+        let self_off: Feature = unit_vec.iter().map(|x| x * self_rad).collect();
+        // other_off = unit_vec * other_rad
+        let other_off: Feature = unit_vec.into_iter().map(|x| -x * other_rad).collect();
+        // self_p = self + self_off
+        let self_p: Feature = (0..self.len()).map(|i| self[i] + self_off[i]).collect();
+        // other_p = other + other_off
+        let other_p: Feature = (0..self.len()).map(|i| other[i] + other_off[i]).collect();
+        // midpoint = (self_p + other_p) / 2
+        (0..self.len()).map(|i| (self_p[i] + other_p[i]) / 2.).collect()
     }
 }
 
@@ -53,14 +61,6 @@ fn rand_feature(dimensions: u32) -> Feature {
     (0..(2 as u32).pow(dimensions))
     .map(|_| rng.gen::<f32>())
     .collect()
-}
-
-fn rand_balltree(size: u32, dimensions: u32) -> BallTree<Feature, u32> {
-    let mut bt: BallTree<Feature, u32> = BallTree::new();
-    for i in 0..(2 as u32).pow(size) {
-        bt.push(Ball::new(rand_feature(dimensions), i + 1));
-    }
-    bt
 }
 
 #[test]
@@ -94,39 +94,8 @@ fn push() {
     let mut bt = BallTree::new();
     assert_eq!(bt.size(), 0);
 
-    let node = Ball::new(rand_feature(9), 1);
-    bt.push(node);
-    assert_eq!(bt.size(), 1);
-
-    let node = Ball::new(rand_feature(9), 2);
-    bt.push(node);
-    assert_eq!(bt.size(), 2);
-
-    let node = Ball::new(rand_feature(9), 3);
-    bt.push(node);
-    assert_eq!(bt.size(), 3);
-
-    let node = Ball::new(rand_feature(9), 4);
-    bt.push(node);
-    assert_eq!(bt.size(), 4);
-
-    let node = Ball::new(rand_feature(9), 5);
-    bt.push(node);
-    assert_eq!(bt.size(), 5);
-
-    let node = Ball::new(rand_feature(9), 6);
-    bt.push(node);
-    assert_eq!(bt.size(), 6);
-
-    let node = Ball::new(rand_feature(9), 7);
-    bt.push(node);
-    assert_eq!(bt.size(), 7);
-
-    let node = Ball::new(rand_feature(9), 8);
-    bt.push(node);
-    assert_eq!(bt.size(), 8);
-
-    let node = Ball::new(rand_feature(9), 9);
-    bt.push(node);
-    assert_eq!(bt.size(), 9);
+    for i in 0..20 {
+        bt.push(Ball::new(rand_feature(9), i));
+        assert_eq!(bt.size(), i + 1);
+    }
 }
