@@ -26,7 +26,7 @@ impl HasMeasurableDiff for Feature {
         .fold(0., |sum, x| sum + x)
     }
 
-    fn midpoint(&self, other: &Self, self_rad: &f32, other_rad: &f32) -> Self {
+    fn midpoint(&self, other: &Self, self_rad: f32, other_rad: f32) -> Self {
         // span = self - other
         let span: Vec<f32> = (0..self.key.len()).map(|i| self.key[i] - other.key[i]).collect();
         // mag = sqrt(sum(x^2))
@@ -70,7 +70,7 @@ pub fn rand_balltree(size: u32, dimensions: u32) -> BallTree<Feature, u32> {
         if i % 100 == 0 {
             let push_time = now.elapsed();
             now = Instant::now();
-            bt.nn_search(&origin, &100);
+            bt.nn_search(&origin, 100);
             let search_time = now.elapsed();
             println!(
                 "{}/{} loaded -- push time: {}s, {}ns -- search time: {}s, {}ns",

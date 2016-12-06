@@ -15,82 +15,46 @@ Import crate for use:
 ```rust
 extern crate ball_tree;
 
-use ball_tree::ball_tree::BallTree;
+use ball_tree::{BallTree, Ball};
 ```
 
 Create a new ball tree:
+
+In this example, the ball tree key is of type `Vec<f32>` and leaf node values are `String`s
 ```rust
-let bt: BallTree<Vec<f32>> = BallTree::new()
+let mut bt: BallTree<Vec<f32>, String> = BallTree::new()
 ```
 
-Insert Items into ball tree. Note, `bt` is consumed when `push` is called on it:
+Insert Items into ball tree:
 ```rust
-let vector: Vec<f32> = vec![1., 2., 3...];
-let updated_tree = bt.push(&vector);
+let new_node = Ball::new(vec![1., 2., 3...], "Some data can go here")
+bt.push(new_node);
 ```
 
 Search for k nearest neighbors in a ball tree.
 ```rust
-let search_point: Vec<f32> = vec![1., 2., 3...];
-let knn: Vec<Vec<f32>> = bt.nn_search(&search_point, 5);
+let search_key: Vec<f32> = vec![1., 2., 3...];
+let knn: Vec<Ball::Leaf<Vec<f32>, String> = bt.nn_search(&search_point, 5);
 // knn will be top 5 nearest points in the tree,
 // assuming at least 5 points in the ball tree.
+for neighbor in knn.into_iter() {
+    print!("{:?} -> {:?}", neighbor.key, neighbor.val);
+}
 ```
 
-### Custom Types UNTESTED
-Straight vectors not enough for you? Store more data with custom types!
+### Custom Types
+By default and in the examples above, the ball tree structure is based of of vectors for keys and the euclidean distance between those vectors. However, you can use any data type as a key as long as you have a valid implementation of the difference function between keys and a midpoint function that can calculate a midpoint between two given keys. By devising these custom implementations you can also 
 
-Define a custom type for the ball tree and implement the `Baller` and `Clone` traits:
+Define a custom key for the ball tree and implement the `HasMeasurableDiff` trait (or impl the trait on a primitive type like `String`:
 ```rust
-// define a custom struct
-#[derive(Clone)]
-struct CustomType {
-    id: u64,
-    name: String,
-    vector: Vec<f32>
-}
+// define a custom key - val pair
+type CustomKey = Vec<f32>;
+struct CustomVal { id: u64, name: String }
 
-// pub trait Baller {
-//     fn metric(&self, &Self) -> f32;
-//     fn midpoint(&self, &f32, &Self, &f32) -> Self;
+// pub trait HasMeasurableDiff {
+//     fn difference(&self, other: &Self) -> f32;
+//     fn midpoint(&self, other: &Self, self_rad: f32, other_rad: f32) -> Self;
 // }
-
-impl Baller for CustomType {
-    // Distance. Generally how far apart the center of the balls are away from each-other
-    fn metric(&self, other: &CustomType) -> f32 {
-        use ball_tree::vector_math::*;
-        
-        distance(&self.vector, &other.vector) // euclidean distance
-    }
-
-    // Midpoint. The (halfway point) from ball 1 to ball 2.
-    // Could be based on euclidean distance, or an english dictionary lookup!
-    fn midpoint(&self, self_rad: &f32, other: &CustomType, other_rad: &f32) -> CustomType {
-        use ball_tree::vector_math::*;
-        // compute the spacial midpoint using geometry
-        let span = subtract_vec(&self.vector, &other.vector);
-        let mag = magnitude(&span);
-        let unit_vec = divide_scal(&span, &mag);
-        let p1 = add_vec(&self.vector, &multiply_scal(&unit_vec, &self_rad));
-        let p2 = subtract_vec(&other.vector, &multiply_scal(&unit_vec, &other_rad));
-        CustomType {
-            id: 0,
-            name: "",
-            vector: midpoint(&p1, &p2)
-        }
-    }
-}
-```
-
-Use the ball tree:
-```rust
-let bt: BallTree<CustomType> = BallTree::new();
-let bt_updated = bt.push(&CustomType {
-    id: 1,
-    name: "The Origin",
-    vector: vec![0., 0., 0., 0., 0.,]
-});
-```
 
 ## Testing
 For sanity check tests run `cargo test`.

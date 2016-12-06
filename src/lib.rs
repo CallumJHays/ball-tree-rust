@@ -11,12 +11,13 @@ use std::cmp::Ordering;
 
 pub trait HasMeasurableDiff {
     fn difference(&self, other: &Self) -> f32;
-    fn midpoint(&self, other: &Self, self_rad: &f32, other_rad: &f32) -> Self;
+    fn midpoint(&self, other: &Self, self_rad: f32, other_rad: f32) -> Self;
 }
 
-pub trait IsKdConstructable<V: Sync> where Self: Sync + Sized + HasMeasurableDiff {
-    fn construct(collection: Vec<(Self, V)>) -> BallTree<Self, V>;
-}
+// TODO
+// pub trait IsKdConstructable<V: Sync> where Self: Sync + Sized + HasMeasurableDiff {
+//     fn construct(collection: Vec<(Self, V)>) -> BallTree<Self, V>;
+// }
 
 #[derive(Debug, PartialEq)]
 pub enum Ball<K, V> where K: HasMeasurableDiff + Sync, V: Sync  {
@@ -66,7 +67,7 @@ impl<K, V> Ball<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
         }
     }
 
-    fn nn_search_node(&self, search_key: &K, limit: &u32) -> Vec<&Self> {
+    fn nn_search_node(&self, search_key: &K, limit: u32) -> Vec<&Self> {
         // traverse the tree iteratively until one child is not large enough
         // to satisfy limit, or until limit is fulfilled
         let mut cur_node: *const Ball<K, V> = self as *const Ball<K, V>;
@@ -80,11 +81,11 @@ impl<K, V> Ball<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
 
                     let (closest, furthest) = if go_left { (left, right) } else { (right, left) };
                     
-                    if closest.size() < *limit {
+                    if closest.size() < limit {
                         // parrallellize the remaining search among both children
                         let (mut r1, mut r2) = rayon::join(
-                            || closest.nn_search_node(&search_key, &closest.size()),
-                            || furthest.nn_search_node(&search_key, &(limit - closest.size()))
+                            || closest.nn_search_node(&search_key, closest.size()),
+                            || furthest.nn_search_node(&search_key, (limit - closest.size()))
                         );
                         r1.append(&mut r2);
                         return r1;
@@ -110,14 +111,14 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
 
     pub fn size(&self) -> u32 { self.size }
 
-    pub fn nn_search(&self, search_key: &K, limit: &u32) -> Vec<&Ball<K, V>> {
+    pub fn nn_search(&self, search_key: &K, limit: u32) -> Vec<&Ball<K, V>> {
         let root_node = match self.root {
             None => return vec![],
             Some(ref root_node) => &**root_node
         };
 
         // return search results ordered by difference
-        let mut results = root_node.nn_search_node(&search_key, &limit);
+        let mut results = root_node.nn_search_node(&search_key, limit);
         results.sort_by(|n1, n2| {
             let n1_diff = n1.key().difference(&search_key);
             let n2_diff = n2.key().difference(&search_key);
@@ -138,9 +139,8 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
         // handle if outside root ball initially
         {
             let outside_root: bool = {
-                let (node_key, _) = node.get_key_and_radius();
                 let (root_key, root_rad) = root_node.get_key_and_radius();
-                root_key.difference(node_key) > root_rad
+                root_key.difference(node.key()) > root_rad
             };
 
             if outside_root {
@@ -186,7 +186,7 @@ fn bounding_ball<K, V>(b1: Ball<K, V>, b2: Ball<K, V>) -> Ball<K, V>
         let (b1_key, b1_rad) = b1.get_key_and_radius();
         let (b2_key, b2_rad) = b2.get_key_and_radius();
 
-        let midpoint = b1_key.midpoint(&b2_key, &b1_rad, &b2_rad);
+        let midpoint = b1_key.midpoint(&b2_key, b1_rad, b2_rad);
         let radius = b1_key.difference(&midpoint) + b1_rad;
 
         if radius.is_nan() { panic!("radius was NaN! Please thoroughly test your midpoint function.") }
