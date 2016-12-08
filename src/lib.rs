@@ -7,6 +7,7 @@ extern crate rayon;
 
 use std::marker::PhantomData;
 use std::mem;
+use std::fmt::Debug;
 use std::cmp::Ordering;
 
 pub trait HasMeasurableDiff {
@@ -140,7 +141,8 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
         {
             let outside_root: bool = {
                 let (root_key, root_rad) = root_node.get_key_and_radius();
-                root_key.difference(node.key()) > root_rad
+                let dist = root_key.difference(node.key());
+                dist > root_rad || dist == 0.
             };
 
             if outside_root {
@@ -150,6 +152,7 @@ impl<K, V> BallTree<K, V> where K: HasMeasurableDiff + Sync, V: Sync {
         
         // search iteratively until bounded with the closest ball
         let mut cur_child: *mut Box<Ball<K, V>> = &mut root_node;
+
         loop {
             if let &mut Ball::Branch { ref mut size, ref mut left, ref mut right, .. } = unsafe { &mut **cur_child } {
                 *size += 1;

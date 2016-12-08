@@ -36,7 +36,7 @@ impl HasMeasurableDiff for Feature {
         .sqrt()
     }
 
-    fn midpoint(&self, other: &Self, self_rad: &f32, other_rad: &f32) -> Self {
+    fn midpoint(&self, other: &Self, self_rad: f32, other_rad: f32) -> Self {
         // span = self - other
         let span: Feature = (0..self.len()).map(|i| self[i] - other[i]).collect();
         // mag = sqrt(sum(x^2))
@@ -65,7 +65,7 @@ fn rand_feature(dimensions: u32) -> Feature {
 
 #[test]
 fn midpoint_impl() {
-    let test = vec![50., 10., 10.].midpoint(&vec![-50., 10., 10.], &25., &25.);
+    let test = vec![50., 10., 10.].midpoint(&vec![-50., 10., 10.], 25., 25.);
     assert_eq!(test, vec![0., 10., 10.]);
 }
 
@@ -74,7 +74,7 @@ fn nn_search() {
     // searching an empty tree gets an empty vec
     let bt: BallTree<Feature, i32> = BallTree::new();
     let search_feature = vec![10., 10.];
-    assert_eq!(bt.nn_search(&search_feature, &1), vec![] as Vec<&Ball<Feature, i32>>);
+    assert_eq!(bt.nn_search(&search_feature, 1), vec![] as Vec<&Ball<Feature, i32>>);
 
     // searching a tree gets the desired results
     let expected_res = vec![
@@ -86,7 +86,7 @@ fn nn_search() {
     ];
     let expected_res_ref: Vec<&Ball<Feature, i32>> = expected_res.iter().collect();
     let bt = simple_sample_tree();
-    assert_eq!(bt.nn_search(&search_feature, &5), expected_res_ref);
+    assert_eq!(bt.nn_search(&search_feature, 5), expected_res_ref);
 }
 
 #[test]
